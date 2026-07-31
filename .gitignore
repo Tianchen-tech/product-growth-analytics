@@ -238,3 +238,7 @@ data/interim/
 data/private/
 tmp/
 *.tmp
+
+# The Sites Vite source plugin is code, not generated build output.
+!dashboard/site/build/
+!dashboard/site/build/sites-vite-plugin.ts
