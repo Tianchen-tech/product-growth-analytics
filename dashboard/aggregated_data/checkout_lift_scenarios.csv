@@ -1,0 +1,7 @@
+absolute_lift_pp,eligible_checkout_sessions,scenario_incremental_orders,scenario_incremental_revenue_usd,evidence_type
+0.25,5187,12.9675,896.49,scenario_not_forecast
+0.5,5187,25.935,1792.99,scenario_not_forecast
+1.0,5187,51.87,3585.98,scenario_not_forecast
+2.0,5187,103.74,7171.95,scenario_not_forecast
+3.0,5187,155.61,10757.93,scenario_not_forecast
+5.0,5187,259.35,17929.88,scenario_not_forecast

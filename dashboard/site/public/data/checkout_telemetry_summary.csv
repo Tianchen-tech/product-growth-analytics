@@ -1,0 +1,9 @@
+metric_key,label,numerator_sessions,denominator_sessions,metric_rate,interpretation,reconciliation_status
+checkout_purchase_rate,Purchases after checkout,2491,5187,0.4802390592,Observed historical behavior,PASS
+strict_sequence_purchase_rate,Strict shipping → payment → purchase,1550,5187,0.298823983,Sequence-dependent diagnostic,PASS
+strict_coverage_of_purchases,Purchases with the strict intermediate sequence,1550,2491,0.6222400642,Sequence-dependent diagnostic,PASS
+purchase_sequence_gap,Purchases missing the strict intermediate sequence,941,2491,0.3777599358,Sequence/re-entry artifact; not abandonment,PASS
+repeated_checkout_start,Checkout sessions with repeated begin_checkout,4811,5187,0.9275110854,Observed historical behavior,PASS
+gap_shipping_before_checkout,Gap purchases with shipping at/before governed checkout,941,941,1.0,Supports sequence/re-entry diagnosis,PASS
+gap_payment_before_purchase,Gap purchases with payment before purchase,941,941,1.0,Supports sequence/re-entry diagnosis,PASS
+gap_no_shipping_anywhere,Gap purchases with no shipping event anywhere,0,941,0.0,Rules out broad missing-shipping telemetry,PASS

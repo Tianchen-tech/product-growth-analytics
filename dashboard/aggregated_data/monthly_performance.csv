@@ -1,0 +1,4 @@
+month,sessions,product_view_sessions,ordered_checkout_sessions,purchasing_sessions,orders,revenue_usd,purchase_session_conversion_rate,average_order_value_usd
+2020-11,108401,25946,841,1155,1250,92452.0,0.0106548833,73.96
+2020-12,133351,27971,2891,2026,2298,157829.0,0.0151929869,68.68
+2021-01,118377,23103,1455,840,888,56397.0,0.007095973,63.51

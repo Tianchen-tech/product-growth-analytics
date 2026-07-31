@@ -216,3 +216,25 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific macOS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Environment variables and credentials
+.env.*
+!.env.example
+*service-account*.json
+*service_account*.json
+credentials*.json
+
+# Repository-local command-line tools
+.tools/
+
+# Local data and temporary exports
+data/raw/
+data/interim/
+data/private/
+tmp/
+*.tmp
