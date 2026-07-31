@@ -1,0 +1,2 @@
+is_simulated,seed,control_conversion_rate,treatment_conversion_rate,estimated_difference_pp,ci95_lower_pp,ci95_upper_pp,two_sided_p_value,srm_p_value,revenue_per_eligible_user_difference_usd,payment_error_difference_pp,power_simulation_seed,aa_false_positive_rate,ab_power_at_planned_mde,evidence_value
+True,20260731,0.4818,0.5497,6.8,3.39,10.19,9e-05,0.2802,4.8,-0.03,20260801,0.0498,0.8046,demonstration_only

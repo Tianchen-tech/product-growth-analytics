@@ -1,0 +1,6 @@
+segment_type,segment_value,gap_purchase_sessions,purchase_sessions,gap_rate,gap_rate_ci95_lower,gap_rate_ci95_upper,minimum_denominator,is_reportable
+Device,desktop,527,1409,0.3740241306,0.3491335893,0.3995997184,50,True
+Device,mobile,391,1027,0.3807205453,0.3515203153,0.4108097715,50,True
+Device,tablet,23,55,0.4181818182,0.2973776575,0.5496689626,50,True
+User tenure,New,379,993,0.3816717019,0.3519671475,0.4122882435,50,True
+User tenure,Returning,562,1498,0.3751668892,0.3509974065,0.3999749762,50,True

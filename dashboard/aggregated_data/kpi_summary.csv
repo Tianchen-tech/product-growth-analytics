@@ -1,0 +1,2 @@
+analysis_start_date,analysis_end_date,observed_calendar_days,pseudonymous_users,sessions,engaged_sessions,product_view_sessions,ordered_checkout_sessions,purchasing_sessions,orders,revenue_usd,session_engagement_rate,purchase_session_conversion_rate,average_order_value_usd,revenue_per_session_usd
+2020-11-01,2021-01-31,92,270154,360129,320096,77020,5187,4021,4436,306678.0,0.8888370556106284,0.011165443493859145,69.13390441839495,0.8515781844838932

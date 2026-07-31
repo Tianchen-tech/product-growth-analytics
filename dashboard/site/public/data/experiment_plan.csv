@@ -1,0 +1,2 @@
+historical_baseline_proxy,alpha,target_power,planned_absolute_mde_pp,core_sample_per_arm,core_total_sample,operational_buffer,buffered_target_per_arm,buffered_total_target,historical_checkout_session_proxy_per_day,historical_volume_proxy_weeks,randomization_unit,exposure_rule,readiness_status
+0.4802390592,0.05,0.8,5.0,1569,3138,0.05,1648,3296,56.3804,8.35,user,sticky experiment_exposure; never re-randomize,design_ready_instrumentation_pending

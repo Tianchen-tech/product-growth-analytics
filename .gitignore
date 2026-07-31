@@ -216,3 +216,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project-specific macOS and editor files
+.DS_Store
+.idea/
+.vscode/
+
+# Environment variables and credentials
+.env.*
+!.env.example
+*service-account*.json
+*service_account*.json
+credentials*.json
+
+# Repository-local command-line tools
+.tools/
+
+# Local data and temporary exports
+data/raw/
+data/interim/
+data/private/
+tmp/
+*.tmp
+
+# The Sites Vite source plugin is code, not generated build output.
+!dashboard/site/build/
+!dashboard/site/build/sites-vite-plugin.ts

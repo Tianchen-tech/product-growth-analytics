@@ -1,0 +1,786 @@
+{
+  "metadata": {
+    "sourceRun": "20260731T052813Z",
+    "analysisStartDate": "2020-11-01",
+    "analysisEndDate": "2021-01-31",
+    "observedCalendarDays": 92,
+    "dataLabel": "Historical GA4 sample; not current store performance",
+    "privacy": "Aggregate-only; no user or session rows"
+  },
+  "kpis": {
+    "users": 270154,
+    "sessions": 360129,
+    "engagedSessions": 320096,
+    "productViewSessions": 77020,
+    "checkoutSessions": 5187,
+    "purchasingSessions": 4021,
+    "orders": 4436,
+    "revenueUsd": 306678.0,
+    "engagementRate": 0.8888370556,
+    "purchaseSessionRate": 0.0111654435,
+    "averageOrderValueUsd": 69.13,
+    "revenuePerSessionUsd": 0.85
+  },
+  "monthly": [
+    {
+      "month": "2020-11",
+      "sessions": 108401,
+      "orders": 1250,
+      "revenueUsd": 92452.0,
+      "purchaseSessionRate": 0.0106548833,
+      "averageOrderValueUsd": 73.96
+    },
+    {
+      "month": "2020-12",
+      "sessions": 133351,
+      "orders": 2298,
+      "revenueUsd": 157829.0,
+      "purchaseSessionRate": 0.0151929869,
+      "averageOrderValueUsd": 68.68
+    },
+    {
+      "month": "2021-01",
+      "sessions": 118377,
+      "orders": 888,
+      "revenueUsd": 56397.0,
+      "purchaseSessionRate": 0.007095973,
+      "averageOrderValueUsd": 63.51
+    }
+  ],
+  "funnel": [
+    {
+      "stageIndex": 1,
+      "stageName": "view_item",
+      "sessions": 77020,
+      "stepConversionRate": 1.0,
+      "cumulativeConversionRate": 1.0,
+      "lostSessions": 0,
+      "stepDropoffRate": 0.0
+    },
+    {
+      "stageIndex": 2,
+      "stageName": "add_to_cart",
+      "sessions": 14380,
+      "stepConversionRate": 0.18670475201246428,
+      "cumulativeConversionRate": 0.18670475201246428,
+      "lostSessions": 62640,
+      "stepDropoffRate": 0.8132952479875357
+    },
+    {
+      "stageIndex": 3,
+      "stageName": "begin_checkout",
+      "sessions": 5187,
+      "stepConversionRate": 0.36070931849791377,
+      "cumulativeConversionRate": 0.067346143858738,
+      "lostSessions": 9193,
+      "stepDropoffRate": 0.6392906815020862
+    },
+    {
+      "stageIndex": 4,
+      "stageName": "purchase",
+      "sessions": 2491,
+      "stepConversionRate": 0.4802390591864276,
+      "cumulativeConversionRate": 0.032342248766554144,
+      "lostSessions": 2696,
+      "stepDropoffRate": 0.5197609408135724
+    }
+  ],
+  "segments": [
+    {
+      "segmentType": "Device",
+      "segmentValue": "desktop",
+      "metricIndex": 1,
+      "metricName": "purchase_session_conversion",
+      "sessions": 208942,
+      "numeratorSessions": 2288,
+      "denominatorSessions": 208942,
+      "conversionRate": 0.010950407290061357,
+      "ci95Lower": 0.010513081330315336,
+      "ci95Upper": 0.011405715554298876
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "mobile",
+      "metricIndex": 1,
+      "metricName": "purchase_session_conversion",
+      "sessions": 143185,
+      "numeratorSessions": 1651,
+      "denominatorSessions": 143185,
+      "conversionRate": 0.011530537416628836,
+      "ci95Lower": 0.01099051889545123,
+      "ci95Upper": 0.012096765177389127
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "tablet",
+      "metricIndex": 1,
+      "metricName": "purchase_session_conversion",
+      "sessions": 8002,
+      "numeratorSessions": 82,
+      "denominatorSessions": 8002,
+      "conversionRate": 0.010247438140464884,
+      "ci95Lower": 0.008263904695843398,
+      "ci95Upper": 0.01270096947559918
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "desktop",
+      "metricIndex": 2,
+      "metricName": "view_to_cart",
+      "sessions": 208942,
+      "numeratorSessions": 8303,
+      "denominatorSessions": 44819,
+      "conversionRate": 0.18525625292844553,
+      "ci95Lower": 0.18168649968462078,
+      "ci95Upper": 0.18887995523502915
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "mobile",
+      "metricIndex": 2,
+      "metricName": "view_to_cart",
+      "sessions": 143185,
+      "numeratorSessions": 5773,
+      "denominatorSessions": 30501,
+      "conversionRate": 0.18927248286941412,
+      "ci95Lower": 0.18491556785407753,
+      "ci95Upper": 0.19370765739402396
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "tablet",
+      "metricIndex": 2,
+      "metricName": "view_to_cart",
+      "sessions": 8002,
+      "numeratorSessions": 304,
+      "denominatorSessions": 1700,
+      "conversionRate": 0.17882352941176471,
+      "ci95Lower": 0.16133774303851434,
+      "ci95Upper": 0.19775755638222955
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "desktop",
+      "metricIndex": 3,
+      "metricName": "cart_to_checkout",
+      "sessions": 208942,
+      "numeratorSessions": 2975,
+      "denominatorSessions": 8303,
+      "conversionRate": 0.3583042273876912,
+      "ci95Lower": 0.34805807327653604,
+      "ci95Upper": 0.36868143455391056
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "mobile",
+      "metricIndex": 3,
+      "metricName": "cart_to_checkout",
+      "sessions": 143185,
+      "numeratorSessions": 2101,
+      "denominatorSessions": 5773,
+      "conversionRate": 0.3639355620994284,
+      "ci95Lower": 0.3516187434516493,
+      "ci95Upper": 0.3764333398193517
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "tablet",
+      "metricIndex": 3,
+      "metricName": "cart_to_checkout",
+      "sessions": 8002,
+      "numeratorSessions": 111,
+      "denominatorSessions": 304,
+      "conversionRate": 0.3651315789473684,
+      "ci95Lower": 0.31300448311327506,
+      "ci95Upper": 0.420624637817568
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "desktop",
+      "metricIndex": 4,
+      "metricName": "checkout_to_purchase",
+      "sessions": 208942,
+      "numeratorSessions": 1409,
+      "denominatorSessions": 2975,
+      "conversionRate": 0.47361344537815125,
+      "ci95Lower": 0.45571708927825005,
+      "ci95Upper": 0.4915778567031466
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "mobile",
+      "metricIndex": 4,
+      "metricName": "checkout_to_purchase",
+      "sessions": 143185,
+      "numeratorSessions": 1027,
+      "denominatorSessions": 2101,
+      "conversionRate": 0.4888148500713946,
+      "ci95Lower": 0.46748024744454975,
+      "ci95Upper": 0.5101902798044083
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "desktop",
+      "metricIndex": 5,
+      "metricName": "ordered_view_to_purchase",
+      "sessions": 208942,
+      "numeratorSessions": 1409,
+      "denominatorSessions": 44819,
+      "conversionRate": 0.03143755996340838,
+      "ci95Lower": 0.029861793836814282,
+      "ci95Upper": 0.03309364064658757
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "mobile",
+      "metricIndex": 5,
+      "metricName": "ordered_view_to_purchase",
+      "sessions": 143185,
+      "numeratorSessions": 1027,
+      "denominatorSessions": 30501,
+      "conversionRate": 0.03367102717943674,
+      "ci95Lower": 0.031704695579635456,
+      "ci95Upper": 0.035754807909298573
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "tablet",
+      "metricIndex": 5,
+      "metricName": "ordered_view_to_purchase",
+      "sessions": 8002,
+      "numeratorSessions": 55,
+      "denominatorSessions": 1700,
+      "conversionRate": 0.03235294117647059,
+      "ci95Lower": 0.024940045156438773,
+      "ci95Upper": 0.04187453916497395
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "New",
+      "metricIndex": 1,
+      "metricName": "purchase_session_conversion",
+      "sessions": 261238,
+      "numeratorSessions": 1500,
+      "denominatorSessions": 261238,
+      "conversionRate": 0.00574189053659881,
+      "ci95Lower": 0.005459330408180813,
+      "ci95Upper": 0.006038986408324198
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "Returning",
+      "metricIndex": 1,
+      "metricName": "purchase_session_conversion",
+      "sessions": 98891,
+      "numeratorSessions": 2521,
+      "denominatorSessions": 98891,
+      "conversionRate": 0.02549271420048336,
+      "ci95Lower": 0.024528632938575927,
+      "ci95Upper": 0.02649365886540817
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "New",
+      "metricIndex": 2,
+      "metricName": "view_to_cart",
+      "sessions": 261238,
+      "numeratorSessions": 8413,
+      "denominatorSessions": 52171,
+      "conversionRate": 0.16125817024783884,
+      "ci95Lower": 0.15812733517252145,
+      "ci95Upper": 0.16443888617582222
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "Returning",
+      "metricIndex": 2,
+      "metricName": "view_to_cart",
+      "sessions": 98891,
+      "numeratorSessions": 5967,
+      "denominatorSessions": 24849,
+      "conversionRate": 0.24013038754074612,
+      "ci95Lower": 0.2348596861343532,
+      "ci95Upper": 0.24548142410049895
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "New",
+      "metricIndex": 3,
+      "metricName": "cart_to_checkout",
+      "sessions": 261238,
+      "numeratorSessions": 2563,
+      "denominatorSessions": 8413,
+      "conversionRate": 0.3046475692380839,
+      "ci95Lower": 0.2949035771528907,
+      "ci95Upper": 0.31456987959669747
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "Returning",
+      "metricIndex": 3,
+      "metricName": "cart_to_checkout",
+      "sessions": 98891,
+      "numeratorSessions": 2624,
+      "denominatorSessions": 5967,
+      "conversionRate": 0.4397519691637339,
+      "ci95Lower": 0.42720071019211453,
+      "ci95Upper": 0.45238075165731617
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "New",
+      "metricIndex": 4,
+      "metricName": "checkout_to_purchase",
+      "sessions": 261238,
+      "numeratorSessions": 993,
+      "denominatorSessions": 2563,
+      "conversionRate": 0.38743659773702693,
+      "ci95Lower": 0.3687580771319731,
+      "ci95Upper": 0.4064520364427485
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "Returning",
+      "metricIndex": 4,
+      "metricName": "checkout_to_purchase",
+      "sessions": 98891,
+      "numeratorSessions": 1498,
+      "denominatorSessions": 2624,
+      "conversionRate": 0.5708841463414634,
+      "ci95Lower": 0.5518563796109561,
+      "ci95Upper": 0.589704671856336
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "New",
+      "metricIndex": 5,
+      "metricName": "ordered_view_to_purchase",
+      "sessions": 261238,
+      "numeratorSessions": 993,
+      "denominatorSessions": 52171,
+      "conversionRate": 0.019033562707251154,
+      "ci95Lower": 0.017895962178296882,
+      "ci95Upper": 0.02024198713183544
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "Returning",
+      "metricIndex": 5,
+      "metricName": "ordered_view_to_purchase",
+      "sessions": 98891,
+      "numeratorSessions": 1498,
+      "denominatorSessions": 24849,
+      "conversionRate": 0.06028411606100849,
+      "ci95Lower": 0.0573922006458322,
+      "ci95Upper": 0.06331196365631442
+    }
+  ],
+  "pageOpportunities": [
+    {
+      "rank": 1,
+      "title": "Super G Unisex Joggers",
+      "viewSessions": 3830,
+      "addSessions": 46,
+      "viewToAddRate": 0.012010443864229765,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 21.459156422450533,
+      "scenarioRevenueUsd": 1483.5552690090813
+    },
+    {
+      "rank": 2,
+      "title": "YouTube Twill Sandwich Cap Black",
+      "viewSessions": 2803,
+      "addSessions": 18,
+      "viewToAddRate": 0.006421691045308598,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 18.418608674682577,
+      "scenarioRevenueUsd": 1273.3503316353253
+    },
+    {
+      "rank": 3,
+      "title": "Google Dino Game Tee",
+      "viewSessions": 2410,
+      "addSessions": 5,
+      "viewToAddRate": 0.002074688796680498,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 17.65096291892862,
+      "scenarioRevenueUsd": 1220.2799833298448
+    },
+    {
+      "rank": 4,
+      "title": "Google Chrome Dinosaur Collectible",
+      "viewSessions": 1886,
+      "addSessions": 18,
+      "viewToAddRate": 0.009544008483563097,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 11.372891897348469,
+      "scenarioRevenueUsd": 786.2524213920274
+    },
+    {
+      "rank": 5,
+      "title": "Google Land & Sea French Terry Sweatshirt",
+      "viewSessions": 1701,
+      "addSessions": 16,
+      "viewToAddRate": 0.00940623162845385,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 10.29790844138364,
+      "scenarioRevenueUsd": 711.934617895999
+    },
+    {
+      "rank": 6,
+      "title": "Google Blue Stojo Cup",
+      "viewSessions": 1654,
+      "addSessions": 17,
+      "viewToAddRate": 0.010278113663845224,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 9.76355993988066,
+      "scenarioRevenueUsd": 674.9930196669794
+    },
+    {
+      "rank": 7,
+      "title": "Google Campus Bike Eco Tee Navy",
+      "viewSessions": 1427,
+      "addSessions": 8,
+      "viewToAddRate": 0.005606166783461808,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 9.578458824980933,
+      "scenarioRevenueUsd": 662.1962568817634
+    },
+    {
+      "rank": 8,
+      "title": "Google Toddler FC Zip Hoodie",
+      "viewSessions": 1446,
+      "addSessions": 9,
+      "viewToAddRate": 0.006224066390041493,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 9.551217528825878,
+      "scenarioRevenueUsd": 660.3129597171467
+    },
+    {
+      "rank": 9,
+      "title": "Google Land & Sea Cotton Cap",
+      "viewSessions": 1571,
+      "addSessions": 15,
+      "viewToAddRate": 0.009548058561425843,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 9.472287619453542,
+      "scenarioRevenueUsd": 654.856226906847
+    },
+    {
+      "rank": 10,
+      "title": "Google Land & Sea Tech Taco",
+      "viewSessions": 1366,
+      "addSessions": 7,
+      "viewToAddRate": 0.005124450951683748,
+      "benchmarkRate": 0.04435483870967742,
+      "scenarioIncrementalOrders": 9.282995535914576,
+      "scenarioRevenueUsd": 641.7697260963054
+    }
+  ],
+  "retention": [
+    {
+      "week": 0,
+      "cohortUsers": 255276,
+      "activeUsers": 255276,
+      "rate": 1.0,
+      "ci95Lower": 0.999984952,
+      "ci95Upper": 1.0,
+      "completeCohorts": 13
+    },
+    {
+      "week": 1,
+      "cohortUsers": 236616,
+      "activeUsers": 8883,
+      "rate": 0.0375418399,
+      "ci95Lower": 0.0367834125,
+      "ci95Upper": 0.0383152831,
+      "completeCohorts": 12
+    },
+    {
+      "week": 2,
+      "cohortUsers": 216400,
+      "activeUsers": 3294,
+      "rate": 0.0152218115,
+      "ci95Lower": 0.0147145016,
+      "ci95Upper": 0.0157463322,
+      "completeCohorts": 11
+    },
+    {
+      "week": 3,
+      "cohortUsers": 195405,
+      "activeUsers": 2109,
+      "rate": 0.0107929685,
+      "ci95Lower": 0.0103443533,
+      "ci95Upper": 0.0112608179,
+      "completeCohorts": 10
+    },
+    {
+      "week": 4,
+      "cohortUsers": 172951,
+      "activeUsers": 1560,
+      "rate": 0.0090198958,
+      "ci95Lower": 0.0085850984,
+      "ci95Upper": 0.0094765033,
+      "completeCohorts": 9
+    },
+    {
+      "week": 5,
+      "cohortUsers": 156658,
+      "activeUsers": 927,
+      "rate": 0.0059173486,
+      "ci95Lower": 0.0055494826,
+      "ci95Upper": 0.0063094451,
+      "completeCohorts": 8
+    },
+    {
+      "week": 6,
+      "cohortUsers": 139650,
+      "activeUsers": 586,
+      "rate": 0.0041962048,
+      "ci95Lower": 0.0038705397,
+      "ci95Upper": 0.0045491461,
+      "completeCohorts": 7
+    },
+    {
+      "week": 7,
+      "cohortUsers": 115440,
+      "activeUsers": 367,
+      "rate": 0.0031791407,
+      "ci95Lower": 0.0028705193,
+      "ci95Upper": 0.003520826,
+      "completeCohorts": 6
+    },
+    {
+      "week": 8,
+      "cohortUsers": 87889,
+      "activeUsers": 260,
+      "rate": 0.0029582769,
+      "ci95Lower": 0.0026203003,
+      "ci95Upper": 0.0033397011,
+      "completeCohorts": 5
+    }
+  ],
+  "checkoutTelemetry": [
+    {
+      "key": "checkout_purchase_rate",
+      "label": "Purchases after checkout",
+      "numeratorSessions": 2491,
+      "denominatorSessions": 5187,
+      "rate": 0.4802390592,
+      "interpretation": "Observed historical behavior"
+    },
+    {
+      "key": "strict_sequence_purchase_rate",
+      "label": "Strict shipping → payment → purchase",
+      "numeratorSessions": 1550,
+      "denominatorSessions": 5187,
+      "rate": 0.298823983,
+      "interpretation": "Sequence-dependent diagnostic"
+    },
+    {
+      "key": "strict_coverage_of_purchases",
+      "label": "Purchases with the strict intermediate sequence",
+      "numeratorSessions": 1550,
+      "denominatorSessions": 2491,
+      "rate": 0.6222400642,
+      "interpretation": "Sequence-dependent diagnostic"
+    },
+    {
+      "key": "purchase_sequence_gap",
+      "label": "Purchases missing the strict intermediate sequence",
+      "numeratorSessions": 941,
+      "denominatorSessions": 2491,
+      "rate": 0.3777599358,
+      "interpretation": "Sequence/re-entry artifact; not abandonment"
+    },
+    {
+      "key": "repeated_checkout_start",
+      "label": "Checkout sessions with repeated begin_checkout",
+      "numeratorSessions": 4811,
+      "denominatorSessions": 5187,
+      "rate": 0.9275110854,
+      "interpretation": "Observed historical behavior"
+    },
+    {
+      "key": "gap_shipping_before_checkout",
+      "label": "Gap purchases with shipping at/before governed checkout",
+      "numeratorSessions": 941,
+      "denominatorSessions": 941,
+      "rate": 1.0,
+      "interpretation": "Supports sequence/re-entry diagnosis"
+    },
+    {
+      "key": "gap_payment_before_purchase",
+      "label": "Gap purchases with payment before purchase",
+      "numeratorSessions": 941,
+      "denominatorSessions": 941,
+      "rate": 1.0,
+      "interpretation": "Supports sequence/re-entry diagnosis"
+    },
+    {
+      "key": "gap_no_shipping_anywhere",
+      "label": "Gap purchases with no shipping event anywhere",
+      "numeratorSessions": 0,
+      "denominatorSessions": 941,
+      "rate": 0.0,
+      "interpretation": "Rules out broad missing-shipping telemetry"
+    }
+  ],
+  "telemetrySegments": [
+    {
+      "segmentType": "Device",
+      "segmentValue": "desktop",
+      "gapSessions": 527,
+      "purchaseSessions": 1409,
+      "gapRate": 0.3740241306,
+      "ci95Lower": 0.3491335893,
+      "ci95Upper": 0.3995997184
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "mobile",
+      "gapSessions": 391,
+      "purchaseSessions": 1027,
+      "gapRate": 0.3807205453,
+      "ci95Lower": 0.3515203153,
+      "ci95Upper": 0.4108097715
+    },
+    {
+      "segmentType": "Device",
+      "segmentValue": "tablet",
+      "gapSessions": 23,
+      "purchaseSessions": 55,
+      "gapRate": 0.4181818182,
+      "ci95Lower": 0.2973776575,
+      "ci95Upper": 0.5496689626
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "New",
+      "gapSessions": 379,
+      "purchaseSessions": 993,
+      "gapRate": 0.3816717019,
+      "ci95Lower": 0.3519671475,
+      "ci95Upper": 0.4122882435
+    },
+    {
+      "segmentType": "User tenure",
+      "segmentValue": "Returning",
+      "gapSessions": 562,
+      "purchaseSessions": 1498,
+      "gapRate": 0.3751668892,
+      "ci95Lower": 0.3509974065,
+      "ci95Upper": 0.3999749762
+    }
+  ],
+  "checkoutLiftScenarios": [
+    {
+      "absoluteLiftPp": 0.25,
+      "eligibleCheckoutSessions": 5187,
+      "incrementalOrders": 12.9675,
+      "incrementalRevenueUsd": 896.49
+    },
+    {
+      "absoluteLiftPp": 0.5,
+      "eligibleCheckoutSessions": 5187,
+      "incrementalOrders": 25.935,
+      "incrementalRevenueUsd": 1792.99
+    },
+    {
+      "absoluteLiftPp": 1.0,
+      "eligibleCheckoutSessions": 5187,
+      "incrementalOrders": 51.87,
+      "incrementalRevenueUsd": 3585.98
+    },
+    {
+      "absoluteLiftPp": 2.0,
+      "eligibleCheckoutSessions": 5187,
+      "incrementalOrders": 103.74,
+      "incrementalRevenueUsd": 7171.95
+    },
+    {
+      "absoluteLiftPp": 3.0,
+      "eligibleCheckoutSessions": 5187,
+      "incrementalOrders": 155.61,
+      "incrementalRevenueUsd": 10757.93
+    },
+    {
+      "absoluteLiftPp": 5.0,
+      "eligibleCheckoutSessions": 5187,
+      "incrementalOrders": 259.35,
+      "incrementalRevenueUsd": 17929.88
+    }
+  ],
+  "experimentPlan": {
+    "historicalBaselineProxy": 0.4802390592,
+    "alpha": 0.05,
+    "targetPower": 0.8,
+    "plannedMdePp": 5.0,
+    "coreSamplePerArm": 1569,
+    "bufferedTargetPerArm": 1648,
+    "bufferedTotal": 3296,
+    "proxyUnitsPerDay": 56.3804,
+    "proxyWeeks": 8.35,
+    "randomizationUnit": "user",
+    "exposureRule": "sticky experiment_exposure; never re-randomize",
+    "readinessStatus": "design_ready_instrumentation_pending"
+  },
+  "mdeSensitivity": [
+    {
+      "absoluteMdePp": 0.5,
+      "relativeLift": 0.0104114813,
+      "requiredPerArm": 156790,
+      "requiredTotal": 313580,
+      "proxyWeeks": 794.55
+    },
+    {
+      "absoluteMdePp": 1.0,
+      "relativeLift": 0.0208229627,
+      "requiredPerArm": 39210,
+      "requiredTotal": 78420,
+      "proxyWeeks": 198.7
+    },
+    {
+      "absoluteMdePp": 2.0,
+      "relativeLift": 0.0416459253,
+      "requiredPerArm": 9807,
+      "requiredTotal": 19614,
+      "proxyWeeks": 49.7
+    },
+    {
+      "absoluteMdePp": 3.0,
+      "relativeLift": 0.062468888,
+      "requiredPerArm": 4359,
+      "requiredTotal": 8718,
+      "proxyWeeks": 22.09
+    },
+    {
+      "absoluteMdePp": 4.0,
+      "relativeLift": 0.0832918507,
+      "requiredPerArm": 2452,
+      "requiredTotal": 4904,
+      "proxyWeeks": 12.43
+    },
+    {
+      "absoluteMdePp": 5.0,
+      "relativeLift": 0.1041148133,
+      "requiredPerArm": 1569,
+      "requiredTotal": 3138,
+      "proxyWeeks": 7.95
+    }
+  ],
+  "simulationOnly": {
+    "isSimulated": true,
+    "seed": 20260731,
+    "controlRate": 0.4818,
+    "treatmentRate": 0.5497,
+    "differencePp": 6.8,
+    "ci95LowerPp": 3.39,
+    "ci95UpperPp": 10.19,
+    "pValue": 9e-05,
+    "srmPValue": 0.2802,
+    "falsePositiveRate": 0.0498,
+    "power": 0.8046,
+    "evidenceValue": "demonstration_only"
+  }
+}
