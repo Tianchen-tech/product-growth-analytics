@@ -273,7 +273,8 @@ Observed profiling outputs and pass/fail interpretations are recorded in
 - [ ] Obtain stakeholder approval for the provisional MDE and guardrail margins.
 - [x] Build and validate the aggregate-only interactive dashboard.
 - [x] Build and validate the final two-page English decision memo.
-- [ ] Publish the repository update with the final memo and validated findings.
+- [x] Publish the repository update as a reviewable GitHub pull request.
+- [ ] Merge the publication pull request into `main`.
 
 All 19 core profile queries and both targeted follow-ups are recorded in
 `docs/data_profile_results.md`. The implemented marts, thresholds, initial
