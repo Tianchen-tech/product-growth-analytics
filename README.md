@@ -321,6 +321,8 @@ make dashboard-test   # build, reconcile, test, and lint the dashboard
 make dashboard-dev    # run the local interactive dashboard
 
 make memo             # rebuild and validate the two-page English memo PDF
+
+make test             # offline Python regression tests; no BigQuery needed
 ```
 
 Aggregate QA and analysis results are saved under

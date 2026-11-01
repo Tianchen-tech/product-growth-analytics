@@ -6,7 +6,11 @@ NOTEBOOK_JUPYTER := .venv/bin/jupyter
 DASHBOARD_DIR := dashboard/site
 MEMO_PYTHON ?= python3
 
-.PHONY: auth doctor setup dry-run build qa extract all notebook-setup notebook ab-notebook notebooks notebook-html analysis dashboard-setup dashboard-data dashboard-build dashboard-test dashboard-dev dashboard memo
+.PHONY: auth doctor setup dry-run build qa extract all test notebook-setup notebook ab-notebook notebooks notebook-html analysis dashboard-setup dashboard-data dashboard-build dashboard-test dashboard-dev dashboard memo
+
+# Offline checks: standard library only, no BigQuery credentials required.
+test:
+	$(PYTHON) -m unittest discover -s tests -v
 
 auth:
 	$(RUNNER) auth
