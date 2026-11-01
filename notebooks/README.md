@@ -70,8 +70,9 @@ The generators are `scripts/build_analysis_notebook.py` and
 and fail if an input contract, statistical calibration, or decision check
 fails.
 
-The next work is experiment exposure and guardrail validation, current
-unique-user throughput measurement, the aggregate dashboard, and the final
-decision memo. Historical sequence telemetry has been diagnosed by
+The aggregate dashboard and the final decision memo are complete. The
+remaining work is experiment exposure and guardrail validation and current
+unique-user throughput measurement. Historical sequence telemetry has been
+diagnosed by
 `sql/analysis/11_checkout_telemetry_diagnostic.sql`; experiment exposure and
 guardrail instrumentation remain launch gates.
