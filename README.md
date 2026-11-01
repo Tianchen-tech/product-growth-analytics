@@ -1,19 +1,72 @@
 # Product Growth Analytics
 
-An end-to-end product analytics case study using the Google Analytics 4 (GA4)
-public ecommerce dataset.
+**Where does an ecommerce funnel lose the most buyers, which fix should the
+product team test first, and how large a test would prove it worked?**
 
-**Project status:** Source profiling, eight governed core views, one execution
-bridge, eight refreshed analysis marts, both executed analysis notebooks, the
-aggregate-only interactive dashboard, and the two-page English decision memo
-are complete. All 43 hard reconciliations pass. The current evidence
-provisionally advances simplified checkout into a user-randomized experiment,
-conditional on experiment-specific telemetry and stakeholder approval of the
-+5 pp planning MDE; no causal experiment result has been produced.
+An end-to-end case study on Google's public GA4 ecommerce sample: 4.3M events,
+360K sessions, and 4,436 orders from Nov 2020 to Jan 2021, modeled in BigQuery
+SQL, analyzed in Python, and delivered as an interactive dashboard and a
+two-page decision memo.
 
-**Dashboard:** [Open the public interactive dashboard](https://ga4-product-growth-decision-dashboard.world8866.chatgpt.site).
+**[Live dashboard](https://ga4-product-growth-decision-dashboard.world8866.chatgpt.site)** ·
+**[Two-page decision memo (PDF)](docs/product_decision_memo.pdf)** ·
+[Funnel analysis notebook](notebooks/01_funnel_and_sensitivity.ipynb) ·
+[A/B test design notebook](notebooks/02_ab_test_design_and_simulation.ipynb) ·
+[SQL models](sql/)
 
-**Decision memo:** [Read the final two-page PDF](docs/product_decision_memo.pdf).
+[![Decision dashboard overview](dashboard/screenshots/01_decision_overview.png)](https://ga4-product-growth-decision-dashboard.world8866.chatgpt.site)
+
+## Key findings
+
+1. **The biggest leak is product page to cart.** 81% of sessions that view a
+   product never add one to the cart: 62,640 lost sessions, about 7× the next
+   largest drop.
+2. **Missing checkout steps were re-entries, not abandonment.** 941 of 2,491
+   purchases (38%) lack the full shipping-then-payment sequence after the
+   checkout start the funnel counts, but all 941 had already logged shipping by
+   then, and 93% of checkout sessions fire `begin_checkout` more than once. A
+   strict step-sequence metric would have reported 30% checkout completion
+   instead of the actual 48%.
+3. **Returning visitors convert 4.4× better than new ones** (2.55% vs. 0.57%
+   of sessions end in a purchase), while **mobile shows no deficit** against
+   desktop (1.15% vs. 1.10%), so a mobile-only redesign is not supported.
+4. **A naive revenue sum is overstated by 18%** ($362.2K vs. $306.7K of clean
+   revenue), almost entirely from duplicated and conflicting transaction IDs;
+   one ID appears on 883 purchase events. The models are guarded by 43
+   automated reconciliation checks.
+5. **Small improvements cannot be proven at this traffic.** Detecting a +5 pp
+   checkout lift needs about 3,300 users (about 8 weeks); a +0.5 pp lift would
+   need about 314,000 (about 15 years).
+
+## Recommendation
+
+Test a simplified checkout first, as a user-randomized A/B test with sticky
+assignment. The product-page loss is larger, but it is spread across hundreds
+of pages and its size swings with the benchmark chosen; checkout is a single,
+measurable step with a larger scenario (+25.9 orders at a +0.5 pp lift,
+against +21.5 for the best single product page). Historical data show where
+users leave, not why, so only the experiment can establish cause. The design
+is ready but not launch-ready: exposure logging, guardrails, and the minimum
+worthwhile effect still need sign-off.
+
+| Ordered funnel | Checkout telemetry |
+|---|---|
+| ![Ordered funnel: the largest loss is view item to add to cart](dashboard/screenshots/02_ordered_funnel.png) | ![Checkout telemetry: 941 purchases re-entered checkout](dashboard/screenshots/04_checkout_telemetry.png) |
+
+## Skills demonstrated
+
+- **SQL data modeling** on nested event data in BigQuery: staging, fact, and
+  dimension models, window functions, `UNNEST`, and 43 reconciliation checks
+  run from a Python command-line runner.
+- **Product analytics:** ordered funnels, segment comparisons with Wilson
+  intervals, weekly cohort retention, and benchmark-based opportunity sizing.
+- **Experimentation:** sample size and MDE trade-offs, sample-ratio-mismatch
+  checks, Newcombe intervals, guardrails, and a seeded simulation.
+- **Communication:** an interactive dashboard and a two-page decision memo
+  that keep observed behavior, scenarios, and causal claims separate.
+
+The sections below give the full problem framing, method, and reproduction
+steps.
 
 ## Business context
 
@@ -235,7 +288,13 @@ Observed profiling outputs and pass/fail interpretations are recorded in
     └── README.md
 ```
 
-## Current phase
+## Project log
+
+The two open items need a live checkout and stakeholders, so they are out of
+scope for a public-data case study.
+
+<details>
+<summary>All 37 work items, including each source-profiling check</summary>
 
 - [x] Define the business problem and decision criteria.
 - [x] Lock the first version of the metric dictionary.
@@ -275,6 +334,7 @@ Observed profiling outputs and pass/fail interpretations are recorded in
 - [x] Build and validate the final two-page English decision memo.
 - [x] Publish the repository update as a reviewable GitHub pull request.
 
+</details>
 
 All 19 core profile queries and both targeted follow-ups are recorded in
 `docs/data_profile_results.md`. The implemented marts, thresholds, initial
