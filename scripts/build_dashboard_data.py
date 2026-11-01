@@ -42,6 +42,84 @@ OPERATIONAL_BUFFER = 0.05
 SIMULATION_SEED = 20260731
 POWER_SIMULATION_SEED = 20260801
 
+# Checkout telemetry metrics published to the dashboard:
+# (metric_key, label, diagnostic_section, dimension_type, dimension_value,
+#  metric_name, interpretation).
+TELEMETRY_SPECS = [
+    (
+        "checkout_purchase_rate",
+        "Purchases after checkout",
+        "coverage_by_dimension",
+        "Overall",
+        "All checkout sessions",
+        "purchase_after_checkout_rate",
+        "Observed historical behavior",
+    ),
+    (
+        "strict_sequence_purchase_rate",
+        "Strict shipping → payment → purchase",
+        "coverage_by_dimension",
+        "Overall",
+        "All checkout sessions",
+        "strict_sequence_purchase_rate_of_checkout",
+        "Sequence-dependent diagnostic",
+    ),
+    (
+        "strict_coverage_of_purchases",
+        "Purchases with the strict intermediate sequence",
+        "coverage_by_dimension",
+        "Overall",
+        "All checkout sessions",
+        "strict_intermediate_coverage_rate_of_purchases",
+        "Sequence-dependent diagnostic",
+    ),
+    (
+        "purchase_sequence_gap",
+        "Purchases missing the strict intermediate sequence",
+        "coverage_by_dimension",
+        "Overall",
+        "All checkout sessions",
+        "purchase_telemetry_gap_rate",
+        "Sequence/re-entry artifact; not abandonment",
+    ),
+    (
+        "repeated_checkout_start",
+        "Checkout sessions with repeated begin_checkout",
+        "timing_and_duplication_flags",
+        "Overall",
+        "All checkout sessions",
+        "multiple_begin_checkout_events",
+        "Observed historical behavior",
+    ),
+    (
+        "gap_shipping_before_checkout",
+        "Gap purchases with shipping at/before governed checkout",
+        "timing_and_duplication_flags",
+        "Purchase telemetry gap",
+        "Purchases missing the full intermediate sequence",
+        "gap_has_shipping_at_or_before_checkout",
+        "Supports sequence/re-entry diagnosis",
+    ),
+    (
+        "gap_payment_before_purchase",
+        "Gap purchases with payment before purchase",
+        "timing_and_duplication_flags",
+        "Purchase telemetry gap",
+        "Purchases missing the full intermediate sequence",
+        "gap_has_payment_before_purchase",
+        "Supports sequence/re-entry diagnosis",
+    ),
+    (
+        "gap_no_shipping_anywhere",
+        "Gap purchases with no shipping event anywhere",
+        "timing_and_duplication_flags",
+        "Purchase telemetry gap",
+        "Purchases missing the full intermediate sequence",
+        "gap_has_no_shipping_event_anywhere",
+        "Rules out broad missing-shipping telemetry",
+    ),
+]
+
 
 class DashboardDataError(RuntimeError):
     """Raised when dashboard inputs are incomplete or inconsistent."""
@@ -200,6 +278,13 @@ def main() -> None:
         )
     metric = inputs["metric_tree"][0]
 
+    # Outputs are staged in memory and written only after every extract and
+    # reconciliation guard has succeeded, so a failed run never leaves
+    # partially refreshed or unreconciled dashboard data behind.
+    staged_csvs: list[
+        tuple[str, Sequence[Mapping[str, object]], Sequence[str]]
+    ] = []
+
     kpi_fields = [
         "analysis_start_date",
         "analysis_end_date",
@@ -218,7 +303,7 @@ def main() -> None:
         "revenue_per_session_usd",
     ]
     kpi_row = select_fields(metric, kpi_fields)
-    write_csv(OUTPUT_DIR / "kpi_summary.csv", [kpi_row], kpi_fields)
+    staged_csvs.append(("kpi_summary.csv", [kpi_row], kpi_fields))
 
     funnel_fields = [
         "stage_index",
@@ -237,11 +322,7 @@ def main() -> None:
             key=lambda row: as_int(row["stage_index"]),
         )
     ]
-    write_csv(
-        OUTPUT_DIR / "funnel_overall.csv",
-        funnel_rows,
-        funnel_fields,
-    )
+    staged_csvs.append(("funnel_overall.csv", funnel_rows, funnel_fields))
 
     segment_fields = [
         "segment_type",
@@ -270,11 +351,7 @@ def main() -> None:
             row["segment_value"],
         )
     )
-    write_csv(
-        OUTPUT_DIR / "segment_funnel.csv",
-        segment_rows,
-        segment_fields,
-    )
+    staged_csvs.append(("segment_funnel.csv", segment_rows, segment_fields))
 
     page_fields = [
         "page_opportunity_rank",
@@ -299,11 +376,7 @@ def main() -> None:
     page_rows.sort(key=lambda row: as_int(row["page_opportunity_rank"]))
     if not page_rows:
         raise DashboardDataError("No reportable page opportunities were found.")
-    write_csv(
-        OUTPUT_DIR / "page_opportunities.csv",
-        page_rows,
-        page_fields,
-    )
+    staged_csvs.append(("page_opportunities.csv", page_rows, page_fields))
 
     retention_by_week: dict[int, dict[str, int]] = defaultdict(
         lambda: {"cohort_users": 0, "active_users": 0, "complete_cohorts": 0}
@@ -341,10 +414,8 @@ def main() -> None:
         "retention_rate_ci95_upper",
         "complete_cohorts",
     ]
-    write_csv(
-        OUTPUT_DIR / "retention_curve.csv",
-        retention_rows,
-        retention_fields,
+    staged_csvs.append(
+        ("retention_curve.csv", retention_rows, retention_fields)
     )
 
     monthly: dict[str, dict[str, float]] = defaultdict(
@@ -404,10 +475,8 @@ def main() -> None:
         "purchase_session_conversion_rate",
         "average_order_value_usd",
     ]
-    write_csv(
-        OUTPUT_DIR / "monthly_performance.csv",
-        monthly_rows,
-        monthly_fields,
+    staged_csvs.append(
+        ("monthly_performance.csv", monthly_rows, monthly_fields)
     )
 
     checkout_sessions = as_int(metric["ordered_checkout_sessions"])
@@ -438,87 +507,9 @@ def main() -> None:
         "scenario_incremental_revenue_usd",
         "evidence_type",
     ]
-    write_csv(
-        OUTPUT_DIR / "checkout_lift_scenarios.csv",
-        lift_rows,
-        lift_fields,
-    )
+    staged_csvs.append(("checkout_lift_scenarios.csv", lift_rows, lift_fields))
 
     diagnostic_rows = inputs["checkout_diagnostic"]
-    telemetry_specs = [
-        (
-            "checkout_purchase_rate",
-            "Purchases after checkout",
-            "coverage_by_dimension",
-            "Overall",
-            "All checkout sessions",
-            "purchase_after_checkout_rate",
-            "Observed historical behavior",
-        ),
-        (
-            "strict_sequence_purchase_rate",
-            "Strict shipping → payment → purchase",
-            "coverage_by_dimension",
-            "Overall",
-            "All checkout sessions",
-            "strict_sequence_purchase_rate_of_checkout",
-            "Sequence-dependent diagnostic",
-        ),
-        (
-            "strict_coverage_of_purchases",
-            "Purchases with the strict intermediate sequence",
-            "coverage_by_dimension",
-            "Overall",
-            "All checkout sessions",
-            "strict_intermediate_coverage_rate_of_purchases",
-            "Sequence-dependent diagnostic",
-        ),
-        (
-            "purchase_sequence_gap",
-            "Purchases missing the strict intermediate sequence",
-            "coverage_by_dimension",
-            "Overall",
-            "All checkout sessions",
-            "purchase_telemetry_gap_rate",
-            "Sequence/re-entry artifact; not abandonment",
-        ),
-        (
-            "repeated_checkout_start",
-            "Checkout sessions with repeated begin_checkout",
-            "timing_and_duplication_flags",
-            "Overall",
-            "All checkout sessions",
-            "multiple_begin_checkout_events",
-            "Observed historical behavior",
-        ),
-        (
-            "gap_shipping_before_checkout",
-            "Gap purchases with shipping at/before governed checkout",
-            "timing_and_duplication_flags",
-            "Purchase telemetry gap",
-            "Purchases missing the full intermediate sequence",
-            "gap_has_shipping_at_or_before_checkout",
-            "Supports sequence/re-entry diagnosis",
-        ),
-        (
-            "gap_payment_before_purchase",
-            "Gap purchases with payment before purchase",
-            "timing_and_duplication_flags",
-            "Purchase telemetry gap",
-            "Purchases missing the full intermediate sequence",
-            "gap_has_payment_before_purchase",
-            "Supports sequence/re-entry diagnosis",
-        ),
-        (
-            "gap_no_shipping_anywhere",
-            "Gap purchases with no shipping event anywhere",
-            "timing_and_duplication_flags",
-            "Purchase telemetry gap",
-            "Purchases missing the full intermediate sequence",
-            "gap_has_no_shipping_event_anywhere",
-            "Rules out broad missing-shipping telemetry",
-        ),
-    ]
     telemetry_rows = []
     for (
         key,
@@ -528,7 +519,7 @@ def main() -> None:
         dimension_value,
         metric_name,
         interpretation,
-    ) in telemetry_specs:
+    ) in TELEMETRY_SPECS:
         row = diagnostic_row(
             diagnostic_rows,
             section=section,
@@ -556,10 +547,8 @@ def main() -> None:
         "interpretation",
         "reconciliation_status",
     ]
-    write_csv(
-        OUTPUT_DIR / "checkout_telemetry_summary.csv",
-        telemetry_rows,
-        telemetry_fields,
+    staged_csvs.append(
+        ("checkout_telemetry_summary.csv", telemetry_rows, telemetry_fields)
     )
 
     telemetry_segment_rows = []
@@ -603,10 +592,12 @@ def main() -> None:
         "minimum_denominator",
         "is_reportable",
     ]
-    write_csv(
-        OUTPUT_DIR / "checkout_telemetry_by_segment.csv",
-        telemetry_segment_rows,
-        telemetry_segment_fields,
+    staged_csvs.append(
+        (
+            "checkout_telemetry_by_segment.csv",
+            telemetry_segment_rows,
+            telemetry_segment_fields,
+        )
     )
 
     baseline = as_float(metric["checkout_completion_rate"])
@@ -635,11 +626,7 @@ def main() -> None:
         "required_total",
         "historical_volume_proxy_weeks",
     ]
-    write_csv(
-        OUTPUT_DIR / "mde_sensitivity.csv",
-        mde_rows,
-        mde_fields,
-    )
+    staged_csvs.append(("mde_sensitivity.csv", mde_rows, mde_fields))
 
     core_per_arm = sample_size_per_arm(baseline, PLANNED_MDE)
     buffered_per_arm = ceil(core_per_arm * (1 + OPERATIONAL_BUFFER))
@@ -667,10 +654,8 @@ def main() -> None:
         "readiness_status": "design_ready_instrumentation_pending",
     }
     experiment_fields = list(experiment_row)
-    write_csv(
-        OUTPUT_DIR / "experiment_plan.csv",
-        [experiment_row],
-        experiment_fields,
+    staged_csvs.append(
+        ("experiment_plan.csv", [experiment_row], experiment_fields)
     )
 
     simulation_row = {
@@ -691,10 +676,8 @@ def main() -> None:
         "evidence_value": "demonstration_only",
     }
     simulation_fields = list(simulation_row)
-    write_csv(
-        OUTPUT_DIR / "simulation_only_result.csv",
-        [simulation_row],
-        simulation_fields,
+    staged_csvs.append(
+        ("simulation_only_result.csv", [simulation_row], simulation_fields)
     )
 
     dashboard_data = {
@@ -883,6 +866,23 @@ def main() -> None:
             "evidenceValue": simulation_row["evidence_value"],
         },
     }
+
+    telemetry_by_key = {row["metric_key"]: row for row in telemetry_rows}
+    if core_per_arm != 1_569 or buffered_per_arm != 1_648:
+        raise DashboardDataError(
+            "Experiment sample-size reconciliation changed unexpectedly."
+        )
+    if as_int(funnel_rows[-1]["sessions"]) != 2_491:
+        raise DashboardDataError(
+            "Ordered funnel purchase count changed unexpectedly."
+        )
+    if telemetry_by_key["purchase_sequence_gap"]["numerator_sessions"] != 941:
+        raise DashboardDataError(
+            "Checkout telemetry-gap reconciliation changed unexpectedly."
+        )
+
+    for file_name, rows, fields in staged_csvs:
+        write_csv(OUTPUT_DIR / file_name, rows, fields)
     SITE_DATA_PATH.parent.mkdir(parents=True, exist_ok=True)
     SITE_DATA_PATH.write_text(
         json.dumps(
@@ -896,9 +896,7 @@ def main() -> None:
     )
 
     manifest_files = sorted(
-        path
-        for path in OUTPUT_DIR.glob("*.csv")
-        if path.name != "data_manifest.csv"
+        OUTPUT_DIR / file_name for file_name, _, _ in staged_csvs
     )
     manifest_rows = []
     for path in manifest_files:
@@ -930,19 +928,6 @@ def main() -> None:
     SITE_PUBLIC_DATA_DIR.mkdir(parents=True, exist_ok=True)
     for path in [*manifest_files, OUTPUT_DIR / "data_manifest.csv"]:
         shutil.copy2(path, SITE_PUBLIC_DATA_DIR / path.name)
-
-    if core_per_arm != 1_569 or buffered_per_arm != 1_648:
-        raise DashboardDataError(
-            "Experiment sample-size reconciliation changed unexpectedly."
-        )
-    if as_int(funnel_rows[-1]["sessions"]) != 2_491:
-        raise DashboardDataError(
-            "Ordered funnel purchase count changed unexpectedly."
-        )
-    if telemetry_rows[3]["numerator_sessions"] != 941:
-        raise DashboardDataError(
-            "Checkout telemetry-gap reconciliation changed unexpectedly."
-        )
 
     print(f"Dashboard data built from {source_run.name}")
     print(f"Aggregate CSVs: {len(manifest_rows)}")
