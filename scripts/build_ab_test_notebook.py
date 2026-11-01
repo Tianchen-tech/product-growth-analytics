@@ -1212,8 +1212,8 @@ def main() -> None:
             },
         },
     )
-    nbformat.write(notebook, NOTEBOOK_PATH)
-
+    # Execute in memory and write only a fully executed notebook, so a failed
+    # run never replaces the committed executed notebook with a blank one.
     executor = ExecutePreprocessor(
         timeout=300,
         kernel_name="python3",
