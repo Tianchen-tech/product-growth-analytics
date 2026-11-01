@@ -41,11 +41,11 @@ const currencyFormat = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const monthLabels: Record<string, string> = {
-  "2020-11": "Nov 2020",
-  "2020-12": "Dec 2020",
-  "2021-01": "Jan 2021",
-};
+const monthFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 const stageLabels: Record<string, string> = {
   view_item: "View item",
@@ -76,9 +76,21 @@ function formatPercent(value: number, digits = 2): string {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-function formatPp(value: number, digits = 2): string {
+function formatSigned(value: number, digits = 2): string {
   const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(digits)} pp`;
+  return `${sign}${value.toFixed(digits)}`;
+}
+
+function formatPp(value: number, digits = 2): string {
+  return `${formatSigned(value, digits)} pp`;
+}
+
+function formatMonth(isoDateOrMonth: string): string {
+  const [year, month] = isoDateOrMonth.split("-").map(Number);
+  if (!year || !month) {
+    return isoDateOrMonth;
+  }
+  return monthFormat.format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
 function barStyle(width: number): CSSProperties {
@@ -95,6 +107,14 @@ function telemetryMetric(key: string) {
   return metric;
 }
 
+function funnelStage(stageName: string) {
+  const stage = data.funnel.find((item) => item.stageName === stageName);
+  if (!stage) {
+    throw new Error(`Missing funnel stage: ${stageName}`);
+  }
+  return stage;
+}
+
 const checkoutPurchase = telemetryMetric("checkout_purchase_rate");
 const strictCoverage = telemetryMetric("strict_coverage_of_purchases");
 const sequenceGap = telemetryMetric("purchase_sequence_gap");
@@ -102,6 +122,13 @@ const repeatedCheckout = telemetryMetric("repeated_checkout_start");
 const gapShippingBefore = telemetryMetric("gap_shipping_before_checkout");
 const gapPaymentBefore = telemetryMetric("gap_payment_before_purchase");
 const gapNoShipping = telemetryMetric("gap_no_shipping_anywhere");
+
+// Narrative copy reads its numbers from the generated data so the prose
+// cannot drift from the charts when the aggregates are refreshed.
+const viewToCartStage = funnelStage("add_to_cart");
+const sequenceGapCount = numberFormat.format(sequenceGap.numeratorSessions);
+const topPage = data.pageOpportunities[0];
+const smallestMde = data.mdeSensitivity[0];
 
 
 export function Dashboard() {
@@ -144,6 +171,8 @@ export function Dashboard() {
   );
 
   const retentionRows = data.retention.filter((row) => row.week > 0);
+  const firstRetention = retentionRows[0];
+  const lastRetention = retentionRows[retentionRows.length - 1];
   const maxRetentionRate = Math.max(
     ...retentionRows.map((row) => row.rate),
     0.0001,
@@ -172,15 +201,17 @@ export function Dashboard() {
       );
       if (mobile && desktop) {
         return {
-          title: "No observed mobile deficit",
+          title:
+            mobile.conversionRate >= desktop.conversionRate
+              ? "No observed mobile deficit"
+              : "Mobile trails desktop",
           copy: `Mobile converted at ${formatPercent(
             mobile.conversionRate,
           )} versus ${formatPercent(
             desktop.conversionRate,
-          )} on desktop. The +${(
-            (mobile.conversionRate - desktop.conversionRate) *
-            100
-          ).toFixed(2)} pp descriptive difference is not a product-treatment effect.`,
+          )} on desktop. The ${formatPp(
+            (mobile.conversionRate - desktop.conversionRate) * 100,
+          )} descriptive difference is not a product-treatment effect.`,
         };
       }
     }
@@ -240,16 +271,17 @@ export function Dashboard() {
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="status-dot" />
-              Historical GA4 evidence · 92 observed days
+              Historical GA4 evidence ·{" "}
+              {data.metadata.observedCalendarDays} observed days
             </div>
             <h1>
               Test a simpler checkout.
               <span>Do not claim the cause yet.</span>
             </h1>
             <p className="hero-lede">
-              Checkout is the most actionable next experiment, but the apparent
-              941-purchase telemetry gap is a sequence and re-entry artifact—not
-              941 abandoned purchases.
+              Checkout is the most actionable next experiment, but the apparent{" "}
+              {sequenceGapCount}-purchase telemetry gap is a sequence and
+              re-entry artifact—not {sequenceGapCount} abandoned purchases.
             </p>
             <div className="hero-actions">
               <a className="primary-action" href="#experiment">
@@ -277,7 +309,7 @@ export function Dashboard() {
               <div>
                 <CheckCircle2 aria-hidden="true" size={18} />
                 <span>
-                  <strong>48.02%</strong>
+                  <strong>{formatPercent(checkoutPurchase.rate)}</strong>
                   checkout → purchase
                 </span>
               </div>
@@ -291,7 +323,9 @@ export function Dashboard() {
               <div>
                 <FlaskConical aria-hidden="true" size={18} />
                 <span>
-                  <strong>3,296</strong>
+                  <strong>
+                    {numberFormat.format(data.experimentPlan.bufferedTotal)}
+                  </strong>
                   buffered experiment target
                 </span>
               </div>
@@ -384,7 +418,7 @@ export function Dashboard() {
           {data.monthly.map((month) => (
             <div className="month-card" key={month.month}>
               <div>
-                <span>{monthLabels[month.month] ?? month.month}</span>
+                <span>{formatMonth(month.month)}</span>
                 <strong>{compactNumberFormat.format(month.sessions)}</strong>
                 <small>sessions</small>
               </div>
@@ -407,7 +441,11 @@ export function Dashboard() {
             <span className="section-index">02 / Ordered funnel</span>
             <h2 id="funnel-title">The largest absolute loss comes first</h2>
           </div>
-          <div className="segmented-control" aria-label="Funnel rate view">
+          <div
+            className="segmented-control"
+            role="group"
+            aria-label="Funnel rate view"
+          >
             <button
               type="button"
               aria-pressed={funnelMode === "step"}
@@ -444,9 +482,11 @@ export function Dashboard() {
                   key={stage.stageName}
                 >
                   <div className="funnel-label">
-                    <span>0{stage.stageIndex}</span>
+                    <span>{String(stage.stageIndex).padStart(2, "0")}</span>
                     <div>
-                      <strong>{stageLabels[stage.stageName]}</strong>
+                      <strong>
+                        {stageLabels[stage.stageName] ?? stage.stageName}
+                      </strong>
                       <small>
                         {numberFormat.format(stage.sessions)} sessions
                       </small>
@@ -475,12 +515,15 @@ export function Dashboard() {
 
           <aside className="insight-card bottleneck-card">
             <span className="insight-label">Largest observed loss</span>
-            <strong>62,640 sessions</strong>
+            <strong>
+              {numberFormat.format(viewToCartStage.lostSessions)} sessions
+            </strong>
             <h3>View item → add to cart</h3>
             <p>
-              Only 18.67% of product-view sessions proceed to cart. This is the
-              broadest behavioral loss, while checkout remains the clearer
-              intervention to test.
+              Only {formatPercent(viewToCartStage.stepConversionRate)} of
+              product-view sessions proceed to cart. This is the broadest
+              behavioral loss, while checkout remains the clearer intervention
+              to test.
             </p>
             <div className="insight-rule">
               <Info aria-hidden="true" size={17} />
@@ -503,7 +546,11 @@ export function Dashboard() {
             <span className="section-index">03 / Segment diagnosis</span>
             <h2 id="segments-title">Composition matters more than device</h2>
           </div>
-          <div className="segmented-control" aria-label="Segment dimension">
+          <div
+            className="segmented-control"
+            role="group"
+            aria-label="Segment dimension"
+          >
             <button
               type="button"
               aria-pressed={segmentType === "Device"}
@@ -521,7 +568,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="metric-tabs" aria-label="Segment metric">
+        <div className="metric-tabs" role="group" aria-label="Segment metric">
           {metricOptions.map((option) => (
             <button
               type="button"
@@ -592,7 +639,7 @@ export function Dashboard() {
           </div>
           <p>
             Scenario: each eligible page reaches the unweighted P75 view-to-add
-            benchmark of 4.44%.
+            benchmark of {formatPercent(topPage.benchmarkRate)}.
           </p>
         </div>
 
@@ -631,14 +678,15 @@ export function Dashboard() {
           <aside className="top-opportunity">
             <Target aria-hidden="true" size={22} />
             <span className="insight-label">Top governed scenario</span>
-            <h3>{data.pageOpportunities[0].title}</h3>
+            <h3>{topPage.title}</h3>
             <div className="opportunity-number">
-              +{data.pageOpportunities[0].scenarioIncrementalOrders.toFixed(1)}
+              +{topPage.scenarioIncrementalOrders.toFixed(1)}
               <span>orders in the historical-window scenario</span>
             </div>
             <p>
-              This page combines 3,830 views with a 1.20% view-to-add rate. It
-              is a prioritization signal, not a forecast.
+              This page combines {numberFormat.format(topPage.viewSessions)}{" "}
+              views with a {formatPercent(topPage.viewToAddRate)} view-to-add
+              rate. It is a prioritization signal, not a forecast.
             </p>
             <div className="warning-note">
               <Info aria-hidden="true" size={17} />
@@ -657,7 +705,9 @@ export function Dashboard() {
         <div className="section-heading inverted">
           <div>
             <span className="section-index">05 / Checkout telemetry</span>
-            <h2 id="telemetry-title">The 941-session gap is not abandonment</h2>
+            <h2 id="telemetry-title">
+              {`The ${sequenceGapCount}-session gap is not abandonment`}
+            </h2>
           </div>
           <p>
             Re-entry and repeated begin_checkout events make strict event order
@@ -683,6 +733,7 @@ export function Dashboard() {
             </div>
             <div
               className="composition-bar"
+              role="img"
               aria-label={`${formatPercent(
                 strictCoverage.rate,
               )} strict sequence and ${formatPercent(
@@ -740,6 +791,7 @@ export function Dashboard() {
             </div>
             <div
               className="segmented-control dark"
+              role="group"
               aria-label="Telemetry segment dimension"
             >
               <button
@@ -865,6 +917,7 @@ export function Dashboard() {
               max="5"
               step="0.25"
               value={scenarioLiftPp}
+              aria-valuetext={formatPp(scenarioLiftPp)}
               onChange={(event) =>
                 setScenarioLiftPp(Number(event.target.value))
               }
@@ -899,9 +952,11 @@ export function Dashboard() {
             <span className="insight-label">Detectability trade-off</span>
             <h3>Small effects are not feasible at this traffic proxy</h3>
             <p>
-              A +0.50 pp product scenario would need roughly 313,580 units and
-              795 proxy weeks. Opportunity size and experimental detectability
-              are separate decisions.
+              A {formatPp(smallestMde.absoluteMdePp)} product scenario would need
+              roughly {numberFormat.format(smallestMde.requiredTotal)} units and{" "}
+              {numberFormat.format(Math.round(smallestMde.proxyWeeks))} proxy
+              weeks. Opportunity size and experimental detectability are
+              separate decisions.
             </p>
           </div>
           <div className="mde-list">
@@ -949,10 +1004,10 @@ export function Dashboard() {
           </div>
           <div className="simulation-effect">
             <span>Estimated difference</span>
-            <strong>+{data.simulationOnly.differencePp.toFixed(2)} pp</strong>
+            <strong>{formatPp(data.simulationOnly.differencePp)}</strong>
             <small>
-              95% CI +{data.simulationOnly.ci95LowerPp.toFixed(2)} to +
-              {data.simulationOnly.ci95UpperPp.toFixed(2)} pp
+              95% CI {formatSigned(data.simulationOnly.ci95LowerPp)} to{" "}
+              {formatSigned(data.simulationOnly.ci95UpperPp)} pp
             </small>
           </div>
         </aside>
@@ -991,13 +1046,12 @@ export function Dashboard() {
             ))}
           </div>
           <aside className="retention-callout">
-            <span>W1 observed retention</span>
-            <strong>{formatPercent(retentionRows[0].rate)}</strong>
+            <span>W{firstRetention.week} observed retention</span>
+            <strong>{formatPercent(firstRetention.rate)}</strong>
             <p>
-              W8 falls to{" "}
-              {formatPercent(retentionRows[retentionRows.length - 1].rate)}.
-              This informs future traffic expectations; it is not lifetime
-              value.
+              W{lastRetention.week} falls to{" "}
+              {formatPercent(lastRetention.rate)}. This informs future traffic
+              expectations; it is not lifetime value.
             </p>
           </aside>
         </div>
@@ -1053,7 +1107,10 @@ export function Dashboard() {
           </p>
         </div>
         <div className="footer-notes">
-          <span>Historical sample · Nov 2020–Jan 2021</span>
+          <span>
+            Historical sample · {formatMonth(data.metadata.analysisStartDate)}–
+            {formatMonth(data.metadata.analysisEndDate)}
+          </span>
           <span>Opportunity estimates are scenarios</span>
           <span>Experiment output is simulated</span>
         </div>
