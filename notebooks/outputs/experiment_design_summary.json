@@ -1,0 +1,371 @@
+{
+  "generated_by": "scripts/build_ab_test_notebook.py",
+  "evidence_value": "planning_and_simulation_only",
+  "inputs": {
+    "checkout_sessions": 5187,
+    "purchase_after_checkout_sessions": 2491,
+    "historical_baseline_proxy": 0.4802390592,
+    "observed_calendar_days": 92,
+    "daily_checkout_session_proxy": 56.380435,
+    "average_order_value_usd": 69.1339
+  },
+  "assumptions": {
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "planned_mde": 0.05,
+    "operational_buffer": 0.05,
+    "payment_error_base_rate": 0.04,
+    "payment_error_margin": 0.015,
+    "planned_looks": 4,
+    "boundary_method": "O'Brien-Fleming",
+    "futility_rule": "Stop at the halfway look if the observed lift is zero or negative (non-binding)",
+    "harm_rule": "Stop at any look if the payment-error lower bound is above zero",
+    "decision_seed": 20260801,
+    "decision_repetitions": 40000
+  },
+  "primary_only": {
+    "core_per_arm": 1569,
+    "enrollment_per_arm": 1648,
+    "enrollment_total": 3296,
+    "proxy_weeks": 8.3514
+  },
+  "original_plan_audit": {
+    "core_per_arm": 1569,
+    "enrollment_total": 3296,
+    "probability_primary_interval_at_mde": 0.8047,
+    "probability_point_estimate_at_mde": 0.500775,
+    "probability_guardrail_at_mde": 0.56745,
+    "ship_probability_at_mde": 0.285675,
+    "ship_probability_at_mde_without_point_hurdle": 0.458825,
+    "ship_probability_no_effect": 0.001575
+  },
+  "fixed_design": {
+    "core_per_arm": 2880,
+    "ship_probability_at_mde": 0.7945
+  },
+  "plan": {
+    "core_per_arm": 2960,
+    "enrollment_per_arm": 3108,
+    "enrollment_total": 6216,
+    "max_proxy_weeks": 15.7501,
+    "expected_proxy_weeks_if_effective": 13.3908,
+    "expected_proxy_weeks_if_no_effect": 11.689,
+    "ship_probability_at_mde": 0.80055,
+    "ship_probability_half_mde": 0.385975,
+    "ship_probability_no_effect": 0.019525,
+    "ship_probability_harmful_change": 0.02355,
+    "harm_stop_probability_harmful_change": 0.764475,
+    "harm_stop_probability_no_harm": 0.024575,
+    "guardrail_block_probability_at_mde": 0.14215,
+    "no_significant_lift_probability_at_mde": 0.029575,
+    "futility_stop_probability_no_effect": 0.508525,
+    "overall_false_positive_rate": 0.0498
+  },
+  "boundaries": [
+    {
+      "look": 1,
+      "information_fraction": 0.25,
+      "enrolled_per_arm": 777,
+      "enrolled_total": 1554,
+      "proxy_week": 3.9375,
+      "z_boundary": 4.0486,
+      "nominal_two_sided_p": 5.2e-05
+    },
+    {
+      "look": 2,
+      "information_fraction": 0.5,
+      "enrolled_per_arm": 1554,
+      "enrolled_total": 3108,
+      "proxy_week": 7.8751,
+      "z_boundary": 2.8628,
+      "nominal_two_sided_p": 0.0042
+    },
+    {
+      "look": 3,
+      "information_fraction": 0.75,
+      "enrolled_per_arm": 2331,
+      "enrolled_total": 4662,
+      "proxy_week": 11.8126,
+      "z_boundary": 2.3374,
+      "nominal_two_sided_p": 0.019416
+    },
+    {
+      "look": 4,
+      "information_fraction": 1.0,
+      "enrolled_per_arm": 3108,
+      "enrolled_total": 6216,
+      "proxy_week": 15.7501,
+      "z_boundary": 2.0243,
+      "nominal_two_sided_p": 0.042941
+    }
+  ],
+  "operating_characteristics": [
+    {
+      "design": "original_plan",
+      "true_lift_pp": 0.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.001575,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 1.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.0066,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 2.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.026,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 3.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.07385,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 4.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.164225,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 5.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.285675,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 6.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.405525,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 7.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.494075,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "original_plan",
+      "true_lift_pp": 8.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.54055,
+      "expected_proxy_weeks": 8.3514
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 0.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.019525,
+      "expected_proxy_weeks": 11.689
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 1.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.090625,
+      "expected_proxy_weeks": 13.2531
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 2.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.266025,
+      "expected_proxy_weeks": 14.2226
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 3.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.51015,
+      "expected_proxy_weeks": 14.3432
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 4.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.71155,
+      "expected_proxy_weeks": 13.9299
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 5.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.80055,
+      "expected_proxy_weeks": 13.3908
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 6.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.8216,
+      "expected_proxy_weeks": 12.9905
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 7.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.824675,
+      "expected_proxy_weeks": 12.7749
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 8.0,
+      "payment_harm_pp": 0.0,
+      "ship_probability": 0.828325,
+      "expected_proxy_weeks": 12.6538
+    },
+    {
+      "design": "final_plan",
+      "true_lift_pp": 5.0,
+      "payment_harm_pp": 1.5,
+      "ship_probability": 0.02355,
+      "expected_proxy_weeks": 13.0502
+    }
+  ],
+  "margin_tradeoff": [
+    {
+      "margin_pp": 1.0,
+      "guardrail_power_at_original_core": 0.297834,
+      "fixed_core_per_arm": 6040,
+      "sequential_core_per_arm": 6240,
+      "enrollment_total": 13104,
+      "max_proxy_weeks": 33.203,
+      "expected_proxy_weeks_if_effective": 27.1958
+    },
+    {
+      "margin_pp": 1.5,
+      "guardrail_power_at_original_core": 0.573002,
+      "fixed_core_per_arm": 2880,
+      "sequential_core_per_arm": 2960,
+      "enrollment_total": 6216,
+      "max_proxy_weeks": 15.7501,
+      "expected_proxy_weeks_if_effective": 13.3908
+    },
+    {
+      "margin_pp": 2.0,
+      "guardrail_power_at_original_core": 0.81559,
+      "fixed_core_per_arm": 2020,
+      "sequential_core_per_arm": 2100,
+      "enrollment_total": 4410,
+      "max_proxy_weeks": 11.1741,
+      "expected_proxy_weeks_if_effective": 9.5409
+    },
+    {
+      "margin_pp": 2.5,
+      "guardrail_power_at_original_core": 0.946665,
+      "fixed_core_per_arm": 1710,
+      "sequential_core_per_arm": 1790,
+      "enrollment_total": 3760,
+      "max_proxy_weeks": 9.5271,
+      "expected_proxy_weeks_if_effective": 8.0202
+    },
+    {
+      "margin_pp": 3.0,
+      "guardrail_power_at_original_core": 0.990044,
+      "fixed_core_per_arm": 1600,
+      "sequential_core_per_arm": 1720,
+      "enrollment_total": 3612,
+      "max_proxy_weeks": 9.1521,
+      "expected_proxy_weeks_if_effective": 7.5215
+    }
+  ],
+  "peeking": [
+    {
+      "monitoring": "One read at the end",
+      "looks": 1,
+      "false_positive_rate": 0.04977
+    },
+    {
+      "monitoring": "Weekly reads, unadjusted",
+      "looks": 15,
+      "false_positive_rate": 0.22455
+    },
+    {
+      "monitoring": "Daily reads, unadjusted",
+      "looks": 111,
+      "false_positive_rate": 0.38364
+    },
+    {
+      "monitoring": "Four planned reads, O'Brien-Fleming",
+      "looks": 4,
+      "false_positive_rate": 0.04981
+    }
+  ],
+  "planner": {
+    "inflation_factors": {
+      "1": {
+        "0.70": 1.0,
+        "0.80": 1.0,
+        "0.90": 1.0
+      },
+      "2": {
+        "0.70": 1.00834,
+        "0.80": 1.00779,
+        "0.90": 1.00713
+      },
+      "3": {
+        "0.70": 1.01847,
+        "0.80": 1.0174,
+        "0.90": 1.01609
+      },
+      "4": {
+        "0.70": 1.02521,
+        "0.80": 1.02384,
+        "0.90": 1.02216
+      },
+      "5": {
+        "0.70": 1.02996,
+        "0.80": 1.0284,
+        "0.90": 1.02648
+      },
+      "6": {
+        "0.70": 1.03353,
+        "0.80": 1.03183,
+        "0.90": 1.02974
+      }
+    },
+    "unadjusted_false_positive_rates": {
+      "1": 0.04977,
+      "2": 0.08319,
+      "3": 0.1059,
+      "4": 0.12699,
+      "5": 0.14045,
+      "6": 0.15523
+    }
+  },
+  "simulated_example": {
+    "is_simulated": true,
+    "seed": 20260731,
+    "true_lift_pp": 5.0,
+    "stopping_look": 4,
+    "decision": "Do not ship: guardrail not cleared",
+    "enrolled_users": 6216,
+    "control_users": 3106,
+    "treatment_users": 3110,
+    "control_conversion_rate": 0.486478,
+    "treatment_conversion_rate": 0.537299,
+    "estimated_difference_pp": 5.0821,
+    "interval_lower_pp": 2.5156,
+    "interval_upper_pp": 7.6392,
+    "z_statistic": 4.008,
+    "z_boundary": 2.0243,
+    "nominal_two_sided_p_value": 6.1e-05,
+    "srm_p_value": 0.9595,
+    "revenue_per_eligible_user_difference_usd": 4.2578,
+    "payment_error_difference_pp": 0.542,
+    "payment_error_upper_pp": 1.5383,
+    "evidence_value": "demonstration_only"
+  }
+}
