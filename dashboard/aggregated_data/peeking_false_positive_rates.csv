@@ -1,0 +1,5 @@
+monitoring,looks,false_positive_rate
+One read at the end,1,0.04977
+"Weekly reads, unadjusted",15,0.22455
+"Daily reads, unadjusted",111,0.38364
+"Four planned reads, O'Brien-Fleming",4,0.04981

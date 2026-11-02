@@ -16,7 +16,7 @@ from collections import defaultdict
 from math import ceil, sqrt
 from pathlib import Path
 from statistics import NormalDist
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Mapping, Sequence, TypeVar
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,6 +24,24 @@ RESULT_ROOT = ROOT / "data" / "interim" / "query_results"
 OUTPUT_DIR = ROOT / "dashboard" / "aggregated_data"
 SITE_DATA_PATH = ROOT / "dashboard" / "site" / "app" / "dashboard-data.json"
 SITE_PUBLIC_DATA_DIR = ROOT / "dashboard" / "site" / "public" / "data"
+# Written by scripts/build_ab_test_notebook.py; experiment numbers are read
+# from it rather than copied by hand.
+DESIGN_SUMMARY_PATH = (
+    ROOT / "notebooks" / "outputs" / "experiment_design_summary.json"
+)
+DESIGN_SUMMARY_SECTIONS = {
+    "inputs",
+    "assumptions",
+    "primary_only",
+    "original_plan_audit",
+    "plan",
+    "boundaries",
+    "operating_characteristics",
+    "margin_tradeoff",
+    "peeking",
+    "planner",
+    "simulated_example",
+}
 
 REQUIRED_INPUTS = {
     "metric_tree": "01_metric_tree_summary.csv",
@@ -39,8 +57,6 @@ ALPHA = 0.05
 TARGET_POWER = 0.80
 PLANNED_MDE = 0.05
 OPERATIONAL_BUFFER = 0.05
-SIMULATION_SEED = 20260731
-POWER_SIMULATION_SEED = 20260801
 
 # Checkout telemetry metrics published to the dashboard:
 # (metric_key, label, diagnostic_section, dimension_type, dimension_value,
@@ -121,6 +137,9 @@ TELEMETRY_SPECS = [
 ]
 
 
+FieldValue = TypeVar("FieldValue")
+
+
 class DashboardDataError(RuntimeError):
     """Raised when dashboard inputs are incomplete or inconsistent."""
 
@@ -140,6 +159,24 @@ def latest_complete_run() -> Path:
     raise DashboardDataError(
         "No complete aggregate run contains every required dashboard input."
     )
+
+
+def load_design_summary() -> dict:
+    if not DESIGN_SUMMARY_PATH.is_file():
+        raise DashboardDataError(
+            "Missing experiment design summary. Run `make ab-notebook` first."
+        )
+    summary = json.loads(DESIGN_SUMMARY_PATH.read_text(encoding="utf-8"))
+    missing = sorted(DESIGN_SUMMARY_SECTIONS - summary.keys())
+    if missing:
+        raise DashboardDataError(
+            "Experiment design summary is missing: " + ", ".join(missing)
+        )
+    if summary["simulated_example"].get("is_simulated") is not True:
+        raise DashboardDataError(
+            "The example experiment must be labeled as simulated."
+        )
+    return summary
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -164,9 +201,9 @@ def rounded(value: float, digits: int = 10) -> float:
 
 
 def select_fields(
-    row: Mapping[str, str],
+    row: Mapping[str, FieldValue],
     fields: Sequence[str],
-) -> dict[str, str]:
+) -> dict[str, FieldValue]:
     missing = [field for field in fields if field not in row]
     if missing:
         raise DashboardDataError(
@@ -277,6 +314,7 @@ def main() -> None:
             "Metric-tree summary must contain exactly one row."
         )
     metric = inputs["metric_tree"][0]
+    design = load_design_summary()
 
     # Outputs are staged in memory and written only after every extract and
     # reconciliation guard has succeeded, so a failed run never leaves
@@ -628,26 +666,62 @@ def main() -> None:
     ]
     staged_csvs.append(("mde_sensitivity.csv", mde_rows, mde_fields))
 
+    # The primary-metric sample size is recomputed here and must match the
+    # notebook's design summary, which owns the guardrail-sized plan.
     core_per_arm = sample_size_per_arm(baseline, PLANNED_MDE)
     buffered_per_arm = ceil(core_per_arm * (1 + OPERATIONAL_BUFFER))
-    buffered_total = 2 * buffered_per_arm
+    primary_only = design["primary_only"]
+    if (
+        primary_only["core_per_arm"] != core_per_arm
+        or primary_only["enrollment_per_arm"] != buffered_per_arm
+        or abs(design["inputs"]["historical_baseline_proxy"] - baseline) > 1e-9
+    ):
+        raise DashboardDataError(
+            "Experiment design summary does not match the current aggregates. "
+            "Rerun `make ab-notebook`."
+        )
+    assumptions = design["assumptions"]
+    plan = design["plan"]
+    audit = design["original_plan_audit"]
+    if plan["enrollment_total"] != 2 * plan["enrollment_per_arm"]:
+        raise DashboardDataError("Experiment enrollment totals do not reconcile.")
     experiment_row = {
         "historical_baseline_proxy": rounded(baseline),
-        "alpha": ALPHA,
-        "target_power": TARGET_POWER,
-        "planned_absolute_mde_pp": PLANNED_MDE * 100,
-        "core_sample_per_arm": core_per_arm,
-        "core_total_sample": core_per_arm * 2,
-        "operational_buffer": OPERATIONAL_BUFFER,
-        "buffered_target_per_arm": buffered_per_arm,
-        "buffered_total_target": buffered_total,
+        "alpha": assumptions["alpha"],
+        "target_power": assumptions["target_power"],
+        "planned_absolute_mde_pp": rounded(assumptions["planned_mde"] * 100, 2),
+        "payment_error_margin_pp": rounded(
+            assumptions["payment_error_margin"] * 100, 2
+        ),
+        "assumed_payment_error_rate": assumptions["payment_error_base_rate"],
+        "planned_looks": assumptions["planned_looks"],
+        "boundary_method": assumptions["boundary_method"],
+        "primary_only_sample_per_arm": core_per_arm,
+        "core_sample_per_arm": plan["core_per_arm"],
+        "operational_buffer": assumptions["operational_buffer"],
+        "enrollment_target_per_arm": plan["enrollment_per_arm"],
+        "enrollment_target_total": plan["enrollment_total"],
         "historical_checkout_session_proxy_per_day": rounded(
             daily_checkout_proxy,
             4,
         ),
-        "historical_volume_proxy_weeks": rounded(
-            buffered_total / daily_checkout_proxy / 7,
-            2,
+        "max_proxy_weeks": rounded(plan["max_proxy_weeks"], 2),
+        "expected_proxy_weeks_if_effective": rounded(
+            plan["expected_proxy_weeks_if_effective"], 2
+        ),
+        "expected_proxy_weeks_if_no_effect": rounded(
+            plan["expected_proxy_weeks_if_no_effect"], 2
+        ),
+        "ship_probability_at_mde": rounded(plan["ship_probability_at_mde"], 6),
+        "ship_probability_no_effect": rounded(
+            plan["ship_probability_no_effect"], 6
+        ),
+        "ship_probability_harmful_change": rounded(
+            plan["ship_probability_harmful_change"], 6
+        ),
+        "original_plan_enrollment_total": primary_only["enrollment_total"],
+        "original_plan_ship_probability_at_mde": rounded(
+            audit["ship_probability_at_mde"], 6
         ),
         "randomization_unit": "user",
         "exposure_rule": "sticky experiment_exposure; never re-randomize",
@@ -658,24 +732,88 @@ def main() -> None:
         ("experiment_plan.csv", [experiment_row], experiment_fields)
     )
 
-    simulation_row = {
-        "is_simulated": True,
-        "seed": SIMULATION_SEED,
-        "control_conversion_rate": 0.4818,
-        "treatment_conversion_rate": 0.5497,
-        "estimated_difference_pp": 6.80,
-        "ci95_lower_pp": 3.39,
-        "ci95_upper_pp": 10.19,
-        "two_sided_p_value": 0.00009,
-        "srm_p_value": 0.2802,
-        "revenue_per_eligible_user_difference_usd": 4.80,
-        "payment_error_difference_pp": -0.03,
-        "power_simulation_seed": POWER_SIMULATION_SEED,
-        "aa_false_positive_rate": 0.0498,
-        "ab_power_at_planned_mde": 0.8046,
-        "evidence_value": "demonstration_only",
-    }
-    simulation_fields = list(simulation_row)
+    characteristic_fields = [
+        "design",
+        "true_lift_pp",
+        "payment_harm_pp",
+        "ship_probability",
+        "expected_proxy_weeks",
+    ]
+    characteristic_rows = [
+        select_fields(row, characteristic_fields)
+        for row in design["operating_characteristics"]
+    ]
+    staged_csvs.append(
+        (
+            "experiment_operating_characteristics.csv",
+            characteristic_rows,
+            characteristic_fields,
+        )
+    )
+
+    boundary_fields = [
+        "look",
+        "information_fraction",
+        "enrolled_per_arm",
+        "enrolled_total",
+        "proxy_week",
+        "z_boundary",
+        "nominal_two_sided_p",
+    ]
+    boundary_rows = [
+        select_fields(row, boundary_fields) for row in design["boundaries"]
+    ]
+    staged_csvs.append(
+        ("experiment_sequential_boundaries.csv", boundary_rows, boundary_fields)
+    )
+
+    margin_fields = [
+        "margin_pp",
+        "guardrail_power_at_original_core",
+        "fixed_core_per_arm",
+        "sequential_core_per_arm",
+        "enrollment_total",
+        "max_proxy_weeks",
+        "expected_proxy_weeks_if_effective",
+    ]
+    margin_rows = [
+        select_fields(row, margin_fields) for row in design["margin_tradeoff"]
+    ]
+    staged_csvs.append(
+        ("guardrail_margin_tradeoff.csv", margin_rows, margin_fields)
+    )
+
+    peeking_fields = ["monitoring", "looks", "false_positive_rate"]
+    peeking_rows = [
+        select_fields(row, peeking_fields) for row in design["peeking"]
+    ]
+    staged_csvs.append(
+        ("peeking_false_positive_rates.csv", peeking_rows, peeking_fields)
+    )
+
+    simulation_fields = [
+        "is_simulated",
+        "seed",
+        "true_lift_pp",
+        "stopping_look",
+        "decision",
+        "enrolled_users",
+        "control_conversion_rate",
+        "treatment_conversion_rate",
+        "estimated_difference_pp",
+        "interval_lower_pp",
+        "interval_upper_pp",
+        "z_statistic",
+        "z_boundary",
+        "srm_p_value",
+        "revenue_per_eligible_user_difference_usd",
+        "payment_error_difference_pp",
+        "payment_error_upper_pp",
+        "evidence_value",
+    ]
+    simulation_row = select_fields(
+        design["simulated_example"], simulation_fields
+    )
     staged_csvs.append(
         ("simulation_only_result.csv", [simulation_row], simulation_fields)
     )
@@ -826,20 +964,106 @@ def main() -> None:
             "alpha": experiment_row["alpha"],
             "targetPower": experiment_row["target_power"],
             "plannedMdePp": experiment_row["planned_absolute_mde_pp"],
-            "coreSamplePerArm": experiment_row["core_sample_per_arm"],
-            "bufferedTargetPerArm": experiment_row[
-                "buffered_target_per_arm"
+            "paymentErrorMarginPp": experiment_row["payment_error_margin_pp"],
+            "assumedPaymentErrorRate": experiment_row[
+                "assumed_payment_error_rate"
             ],
-            "bufferedTotal": experiment_row["buffered_total_target"],
+            "plannedLooks": experiment_row["planned_looks"],
+            "primaryOnlySamplePerArm": core_per_arm,
+            "coreSamplePerArm": experiment_row["core_sample_per_arm"],
+            "enrollmentPerArm": experiment_row["enrollment_target_per_arm"],
+            "enrollmentTotal": experiment_row["enrollment_target_total"],
             "proxyUnitsPerDay": experiment_row[
                 "historical_checkout_session_proxy_per_day"
             ],
-            "proxyWeeks": experiment_row[
-                "historical_volume_proxy_weeks"
+            "maxProxyWeeks": experiment_row["max_proxy_weeks"],
+            "expectedWeeksIfEffective": experiment_row[
+                "expected_proxy_weeks_if_effective"
             ],
+            "expectedWeeksIfNoEffect": experiment_row[
+                "expected_proxy_weeks_if_no_effect"
+            ],
+            "shipProbabilityAtMde": experiment_row["ship_probability_at_mde"],
+            "shipProbabilityNoEffect": experiment_row[
+                "ship_probability_no_effect"
+            ],
+            "shipProbabilityHarmful": experiment_row[
+                "ship_probability_harmful_change"
+            ],
+            "guardrailBlockAtMde": rounded(
+                plan["guardrail_block_probability_at_mde"], 6
+            ),
+            "falseHarmStopAtMde": rounded(
+                plan["harm_stop_probability_no_harm"], 6
+            ),
+            "noSignificantLiftAtMde": rounded(
+                plan["no_significant_lift_probability_at_mde"], 6
+            ),
             "randomizationUnit": experiment_row["randomization_unit"],
             "exposureRule": experiment_row["exposure_rule"],
             "readinessStatus": experiment_row["readiness_status"],
+        },
+        "originalPlanAudit": {
+            "enrollmentTotal": primary_only["enrollment_total"],
+            "proxyWeeks": rounded(primary_only["proxy_weeks"], 2),
+            "primaryIntervalAtMde": rounded(
+                audit["probability_primary_interval_at_mde"], 6
+            ),
+            "pointEstimateAtMde": rounded(
+                audit["probability_point_estimate_at_mde"], 6
+            ),
+            "guardrailAtMde": rounded(audit["probability_guardrail_at_mde"], 6),
+            "shipProbabilityAtMde": rounded(
+                audit["ship_probability_at_mde"], 6
+            ),
+        },
+        "operatingCharacteristics": [
+            {
+                "design": row["design"],
+                "trueLiftPp": row["true_lift_pp"],
+                "paymentHarmPp": row["payment_harm_pp"],
+                "shipProbability": rounded(row["ship_probability"], 4),
+                "expectedWeeks": rounded(row["expected_proxy_weeks"], 2),
+            }
+            for row in characteristic_rows
+        ],
+        "sequentialBoundaries": [
+            {
+                "look": row["look"],
+                "enrolledTotal": row["enrolled_total"],
+                "proxyWeek": rounded(row["proxy_week"], 2),
+                "zBoundary": rounded(row["z_boundary"], 3),
+            }
+            for row in boundary_rows
+        ],
+        "peeking": [
+            {
+                "monitoring": row["monitoring"],
+                "looks": row["looks"],
+                "falsePositiveRate": rounded(row["false_positive_rate"], 6),
+            }
+            for row in peeking_rows
+        ],
+        "marginTradeoff": [
+            {
+                "marginPp": row["margin_pp"],
+                "enrollmentTotal": row["enrollment_total"],
+                "maxWeeks": rounded(row["max_proxy_weeks"], 2),
+                "expectedWeeksIfEffective": rounded(
+                    row["expected_proxy_weeks_if_effective"], 2
+                ),
+            }
+            for row in margin_rows
+        ],
+        "planner": {
+            "baselineRate": rounded(baseline),
+            "paymentErrorRate": assumptions["payment_error_base_rate"],
+            "unitsPerDay": rounded(daily_checkout_proxy, 4),
+            "operationalBuffer": assumptions["operational_buffer"],
+            "inflationFactors": design["planner"]["inflation_factors"],
+            "unadjustedFalsePositiveRates": design["planner"][
+                "unadjusted_false_positive_rates"
+            ],
         },
         "mdeSensitivity": [
             {
@@ -854,15 +1078,23 @@ def main() -> None:
         "simulationOnly": {
             "isSimulated": simulation_row["is_simulated"],
             "seed": simulation_row["seed"],
-            "controlRate": simulation_row["control_conversion_rate"],
-            "treatmentRate": simulation_row["treatment_conversion_rate"],
-            "differencePp": simulation_row["estimated_difference_pp"],
-            "ci95LowerPp": simulation_row["ci95_lower_pp"],
-            "ci95UpperPp": simulation_row["ci95_upper_pp"],
-            "pValue": simulation_row["two_sided_p_value"],
-            "srmPValue": simulation_row["srm_p_value"],
-            "falsePositiveRate": simulation_row["aa_false_positive_rate"],
-            "power": simulation_row["ab_power_at_planned_mde"],
+            "trueLiftPp": simulation_row["true_lift_pp"],
+            "stoppingLook": simulation_row["stopping_look"],
+            "plannedLooks": assumptions["planned_looks"],
+            "decision": simulation_row["decision"],
+            "controlRate": rounded(simulation_row["control_conversion_rate"], 4),
+            "treatmentRate": rounded(
+                simulation_row["treatment_conversion_rate"], 4
+            ),
+            "differencePp": rounded(simulation_row["estimated_difference_pp"], 2),
+            "intervalLowerPp": rounded(simulation_row["interval_lower_pp"], 2),
+            "intervalUpperPp": rounded(simulation_row["interval_upper_pp"], 2),
+            "zStatistic": rounded(simulation_row["z_statistic"], 2),
+            "zBoundary": rounded(simulation_row["z_boundary"], 2),
+            "paymentErrorUpperPp": rounded(
+                simulation_row["payment_error_upper_pp"], 2
+            ),
+            "paymentErrorMarginPp": experiment_row["payment_error_margin_pp"],
             "evidenceValue": simulation_row["evidence_value"],
         },
     }

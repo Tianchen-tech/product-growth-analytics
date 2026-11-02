@@ -1,0 +1,5 @@
+look,information_fraction,enrolled_per_arm,enrolled_total,proxy_week,z_boundary,nominal_two_sided_p
+1,0.25,777,1554,3.9375,4.0486,5.2e-05
+2,0.5,1554,3108,7.8751,2.8628,0.0042
+3,0.75,2331,4662,11.8126,2.3374,0.019416
+4,1.0,3108,6216,15.7501,2.0243,0.042941

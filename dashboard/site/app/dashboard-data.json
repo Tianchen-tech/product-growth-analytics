@@ -716,14 +716,295 @@
     "alpha": 0.05,
     "targetPower": 0.8,
     "plannedMdePp": 5.0,
-    "coreSamplePerArm": 1569,
-    "bufferedTargetPerArm": 1648,
-    "bufferedTotal": 3296,
+    "paymentErrorMarginPp": 1.5,
+    "assumedPaymentErrorRate": 0.04,
+    "plannedLooks": 4,
+    "primaryOnlySamplePerArm": 1569,
+    "coreSamplePerArm": 2960,
+    "enrollmentPerArm": 3108,
+    "enrollmentTotal": 6216,
     "proxyUnitsPerDay": 56.3804,
-    "proxyWeeks": 8.35,
+    "maxProxyWeeks": 15.75,
+    "expectedWeeksIfEffective": 13.39,
+    "expectedWeeksIfNoEffect": 11.69,
+    "shipProbabilityAtMde": 0.80055,
+    "shipProbabilityNoEffect": 0.019525,
+    "shipProbabilityHarmful": 0.02355,
+    "guardrailBlockAtMde": 0.14215,
+    "falseHarmStopAtMde": 0.024575,
+    "noSignificantLiftAtMde": 0.029575,
     "randomizationUnit": "user",
     "exposureRule": "sticky experiment_exposure; never re-randomize",
     "readinessStatus": "design_ready_instrumentation_pending"
+  },
+  "originalPlanAudit": {
+    "enrollmentTotal": 3296,
+    "proxyWeeks": 8.35,
+    "primaryIntervalAtMde": 0.8047,
+    "pointEstimateAtMde": 0.500775,
+    "guardrailAtMde": 0.56745,
+    "shipProbabilityAtMde": 0.285675
+  },
+  "operatingCharacteristics": [
+    {
+      "design": "original_plan",
+      "trueLiftPp": 0.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.0016,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 1.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.0066,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 2.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.026,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 3.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.0738,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 4.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.1642,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 5.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.2857,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 6.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.4055,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 7.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.4941,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "original_plan",
+      "trueLiftPp": 8.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.5405,
+      "expectedWeeks": 8.35
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 0.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.0195,
+      "expectedWeeks": 11.69
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 1.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.0906,
+      "expectedWeeks": 13.25
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 2.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.266,
+      "expectedWeeks": 14.22
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 3.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.5101,
+      "expectedWeeks": 14.34
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 4.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.7116,
+      "expectedWeeks": 13.93
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 5.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.8005,
+      "expectedWeeks": 13.39
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 6.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.8216,
+      "expectedWeeks": 12.99
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 7.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.8247,
+      "expectedWeeks": 12.77
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 8.0,
+      "paymentHarmPp": 0.0,
+      "shipProbability": 0.8283,
+      "expectedWeeks": 12.65
+    },
+    {
+      "design": "final_plan",
+      "trueLiftPp": 5.0,
+      "paymentHarmPp": 1.5,
+      "shipProbability": 0.0236,
+      "expectedWeeks": 13.05
+    }
+  ],
+  "sequentialBoundaries": [
+    {
+      "look": 1,
+      "enrolledTotal": 1554,
+      "proxyWeek": 3.94,
+      "zBoundary": 4.049
+    },
+    {
+      "look": 2,
+      "enrolledTotal": 3108,
+      "proxyWeek": 7.88,
+      "zBoundary": 2.863
+    },
+    {
+      "look": 3,
+      "enrolledTotal": 4662,
+      "proxyWeek": 11.81,
+      "zBoundary": 2.337
+    },
+    {
+      "look": 4,
+      "enrolledTotal": 6216,
+      "proxyWeek": 15.75,
+      "zBoundary": 2.024
+    }
+  ],
+  "peeking": [
+    {
+      "monitoring": "One read at the end",
+      "looks": 1,
+      "falsePositiveRate": 0.04977
+    },
+    {
+      "monitoring": "Weekly reads, unadjusted",
+      "looks": 15,
+      "falsePositiveRate": 0.22455
+    },
+    {
+      "monitoring": "Daily reads, unadjusted",
+      "looks": 111,
+      "falsePositiveRate": 0.38364
+    },
+    {
+      "monitoring": "Four planned reads, O'Brien-Fleming",
+      "looks": 4,
+      "falsePositiveRate": 0.04981
+    }
+  ],
+  "marginTradeoff": [
+    {
+      "marginPp": 1.0,
+      "enrollmentTotal": 13104,
+      "maxWeeks": 33.2,
+      "expectedWeeksIfEffective": 27.2
+    },
+    {
+      "marginPp": 1.5,
+      "enrollmentTotal": 6216,
+      "maxWeeks": 15.75,
+      "expectedWeeksIfEffective": 13.39
+    },
+    {
+      "marginPp": 2.0,
+      "enrollmentTotal": 4410,
+      "maxWeeks": 11.17,
+      "expectedWeeksIfEffective": 9.54
+    },
+    {
+      "marginPp": 2.5,
+      "enrollmentTotal": 3760,
+      "maxWeeks": 9.53,
+      "expectedWeeksIfEffective": 8.02
+    },
+    {
+      "marginPp": 3.0,
+      "enrollmentTotal": 3612,
+      "maxWeeks": 9.15,
+      "expectedWeeksIfEffective": 7.52
+    }
+  ],
+  "planner": {
+    "baselineRate": 0.4802390592,
+    "paymentErrorRate": 0.04,
+    "unitsPerDay": 56.3804,
+    "operationalBuffer": 0.05,
+    "inflationFactors": {
+      "1": {
+        "0.70": 1.0,
+        "0.80": 1.0,
+        "0.90": 1.0
+      },
+      "2": {
+        "0.70": 1.00834,
+        "0.80": 1.00779,
+        "0.90": 1.00713
+      },
+      "3": {
+        "0.70": 1.01847,
+        "0.80": 1.0174,
+        "0.90": 1.01609
+      },
+      "4": {
+        "0.70": 1.02521,
+        "0.80": 1.02384,
+        "0.90": 1.02216
+      },
+      "5": {
+        "0.70": 1.02996,
+        "0.80": 1.0284,
+        "0.90": 1.02648
+      },
+      "6": {
+        "0.70": 1.03353,
+        "0.80": 1.03183,
+        "0.90": 1.02974
+      }
+    },
+    "unadjustedFalsePositiveRates": {
+      "1": 0.04977,
+      "2": 0.08319,
+      "3": 0.1059,
+      "4": 0.12699,
+      "5": 0.14045,
+      "6": 0.15523
+    }
   },
   "mdeSensitivity": [
     {
@@ -772,15 +1053,19 @@
   "simulationOnly": {
     "isSimulated": true,
     "seed": 20260731,
-    "controlRate": 0.4818,
-    "treatmentRate": 0.5497,
-    "differencePp": 6.8,
-    "ci95LowerPp": 3.39,
-    "ci95UpperPp": 10.19,
-    "pValue": 9e-05,
-    "srmPValue": 0.2802,
-    "falsePositiveRate": 0.0498,
-    "power": 0.8046,
+    "trueLiftPp": 5.0,
+    "stoppingLook": 4,
+    "plannedLooks": 4,
+    "decision": "Do not ship: guardrail not cleared",
+    "controlRate": 0.4865,
+    "treatmentRate": 0.5373,
+    "differencePp": 5.08,
+    "intervalLowerPp": 2.52,
+    "intervalUpperPp": 7.64,
+    "zStatistic": 4.01,
+    "zBoundary": 2.02,
+    "paymentErrorUpperPp": 1.54,
+    "paymentErrorMarginPp": 1.5,
     "evidenceValue": "demonstration_only"
   }
 }

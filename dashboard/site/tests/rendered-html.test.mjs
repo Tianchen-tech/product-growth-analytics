@@ -38,6 +38,10 @@ test("server-renders the product decision dashboard", async () => {
   assert.match(html, /Test a simpler checkout/);
   assert.match(html, /The 941-session gap is not abandonment/);
   assert.match(html, /Design-ready; instrumentation pending/);
+  assert.match(html, /Decision-rule audit/);
+  assert.match(html, /Monitoring without p-hacking/);
+  assert.match(html, /Experiment planner/);
+  assert.match(html, /role="img"[^>]*Probability that each rule ships/);
   assert.match(html, /Simulation only/);
   assert.match(html, /Aggregate-only; no user or session rows/);
   assert.doesNotMatch(html, /Your site is taking shape|Building your site/);
@@ -61,7 +65,16 @@ test("dashboard data remains aggregate-only and reconciled", async () => {
     ).numeratorSessions,
     941,
   );
-  assert.equal(dashboard.experimentPlan.bufferedTotal, 3296);
+  assert.equal(dashboard.experimentPlan.primaryOnlySamplePerArm, 1569);
+  assert.equal(dashboard.originalPlanAudit.enrollmentTotal, 3296);
+  assert.equal(
+    dashboard.experimentPlan.enrollmentTotal,
+    2 * dashboard.experimentPlan.enrollmentPerArm,
+  );
+  assert.ok(dashboard.experimentPlan.shipProbabilityAtMde >= 0.8);
+  assert.ok(dashboard.experimentPlan.shipProbabilityNoEffect <= 0.025);
+  assert.ok(dashboard.originalPlanAudit.shipProbabilityAtMde < 0.4);
+  assert.equal(dashboard.sequentialBoundaries.length, 4);
   assert.equal(dashboard.simulationOnly.isSimulated, true);
 
   const serialized = JSON.stringify(dashboard);

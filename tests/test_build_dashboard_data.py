@@ -11,6 +11,7 @@ from __future__ import annotations
 import csv
 import filecmp
 import importlib.util
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -219,6 +220,22 @@ class BuildDashboardDataTest(unittest.TestCase):
         ] if (self.root / "dashboard").exists() else []
         self.assertEqual(written, [])
 
+    def test_mismatched_design_summary_writes_nothing(self) -> None:
+        summary = json.loads(
+            self.builder.DESIGN_SUMMARY_PATH.read_text(encoding="utf-8")
+        )
+        summary["primary_only"]["core_per_arm"] += 1
+        stale_summary = self.root / "stale_summary.json"
+        stale_summary.write_text(json.dumps(summary), encoding="utf-8")
+        self.builder.DESIGN_SUMMARY_PATH = stale_summary
+
+        with self.assertRaisesRegex(
+            self.builder.DashboardDataError,
+            "does not match the current aggregates",
+        ):
+            self.builder.main()
+        self.assertFalse((self.root / "dashboard").exists())
+
     def test_sample_size_matches_planning_contract(self) -> None:
         baseline = 2_491 / 5_187
         self.assertEqual(self.builder.sample_size_per_arm(baseline, 0.05), 1_569)
@@ -232,6 +249,41 @@ class BuildDashboardDataTest(unittest.TestCase):
         self.assertAlmostEqual(lower, 0.009016753030629593, places=12)
         self.assertAlmostEqual(upper, 0.015982052958122835, places=12)
         self.assertEqual(self.builder.wilson_interval(0, 0), (0.0, 0.0))
+
+
+class ExperimentDesignSummaryTest(unittest.TestCase):
+    # The notebook asserts these properties when it runs; this guards the
+    # committed summary that the dashboard and memo read.
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        path = ROOT / "notebooks" / "outputs" / "experiment_design_summary.json"
+        cls.summary = json.loads(path.read_text(encoding="utf-8"))
+
+    def test_plan_meets_its_operating_characteristics(self) -> None:
+        plan = self.summary["plan"]
+        self.assertGreaterEqual(plan["ship_probability_at_mde"], 0.80)
+        self.assertLessEqual(plan["ship_probability_no_effect"], 0.025)
+        self.assertLessEqual(plan["ship_probability_harmful_change"], 0.03)
+        self.assertLess(
+            self.summary["original_plan_audit"]["ship_probability_at_mde"],
+            0.40,
+        )
+        self.assertEqual(
+            plan["enrollment_total"], 2 * plan["enrollment_per_arm"]
+        )
+        self.assertGreaterEqual(plan["enrollment_per_arm"], plan["core_per_arm"])
+
+    def test_boundaries_are_strict_early_and_end_near_196(self) -> None:
+        bounds = [row["z_boundary"] for row in self.summary["boundaries"]]
+        self.assertEqual(len(bounds), self.summary["assumptions"]["planned_looks"])
+        self.assertEqual(bounds, sorted(bounds, reverse=True))
+        self.assertAlmostEqual(bounds[-1], 2.024, places=2)
+
+    def test_example_is_labeled_simulated(self) -> None:
+        example = self.summary["simulated_example"]
+        self.assertIs(example["is_simulated"], True)
+        self.assertEqual(example["evidence_value"], "demonstration_only")
 
 
 if __name__ == "__main__":
