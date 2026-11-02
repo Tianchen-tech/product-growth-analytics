@@ -405,19 +405,19 @@ For the planned simplified-checkout example:
 | Eligibility | First qualifying `begin_checkout` exposure during the test |
 | Primary metric | Users completing a valid purchase within 24 hours ÷ assigned eligible users |
 | Secondary metric | Gross purchase revenue ÷ assigned eligible users |
-| Guardrails | Payment-error rate, refund/cancellation rate, and checkout completion time, if instrumented |
+| Guardrails | Payment-error rate with a provisional +1.50 pp non-inferiority margin; refund/cancellation rate and checkout completion time, if instrumented |
 | Analysis population | Intention to treat |
-| Significance level | Two-sided 5% |
-| Target power | 80% |
+| Significance level | Two-sided 5% overall, spent across four looks with O'Brien-Fleming boundaries |
+| Target power | 80% probability that the full decision rule ships a true +5.00 pp lift with no payment-error harm |
 | Historical planning proxy | 2,491 purchases after 5,187 ordered checkout sessions, or 48.02% |
 | Planning MDE | Provisional +5.00 percentage points absolute, or 10.4% relative to the proxy baseline |
-| Core sample | 1,569 randomized eligible users per arm; 3,138 total |
-| Buffered enrollment target | 1,648 per arm; 3,296 total after a 5% operational buffer |
+| Primary-metric sample | 1,569 randomized eligible users per arm for the primary test alone |
+| Planned sample | 2,960 per arm, sized by simulating the full decision rule; 3,108 per arm and 6,216 total after a 5% operational buffer |
 | Fixed-N MDE | Smallest absolute conversion lift detectable at planned N, 5% alpha, and 80% power |
-| Assignment check | 50/50 sample-ratio-mismatch test before outcomes; p-value below 0.001 blocks interpretation |
-| Primary interval | 95% Newcombe Wilson-score interval for treatment minus control |
-| Primary test | Pooled two-proportion z-test; confidence interval remains the main uncertainty statement |
-| Stopping | Fixed target sample, evaluated at the end of a full week without outcome peeking |
+| Assignment check | 50/50 sample-ratio-mismatch test before outcomes at every look; p-value below 0.001 blocks interpretation |
+| Primary interval | Newcombe Wilson-score interval for treatment minus control at the look's boundary (a repeated confidence interval) |
+| Ship rule | Primary pooled z-statistic at or above the look's boundary and payment-error upper bound below the margin; the point estimate is not compared with the MDE |
+| Stopping | Planned looks at 25%, 50%, 75%, and 100% of enrollment; stop for harm at any look, for futility at the halfway look (non-binding), or to ship |
 
 Simulated experiment rows use a fixed random seed and a visible
 `is_simulated = TRUE` field. Simulation output demonstrates the method; it is
@@ -425,13 +425,13 @@ never merged with observed GA4 outcomes or described as a real test.
 
 The historical baseline and traffic values are session-grain proxies. A real
 launch must replace them with current unique eligible users and a user-level
-24-hour baseline. At the historical checkout-session volume, the buffered
-sample requires about 8.35 weeks; actual duration can only be established after
-shadow assignment.
+24-hour baseline. At the historical checkout-session volume, the planned sample
+takes at most 15.8 weeks and about 13.4 weeks in expectation when the lift is
+real; actual duration can only be established after shadow assignment.
 
-The primary simulation uses seed `20260731` and assumes a true +5.00 pp lift.
-The calibration uses seed `20260801` and 20,000 A/A plus 20,000 A/B repetitions.
-The simulated payment-error non-inferiority margin is +1.50 pp and remains
+The example experiment uses seed `20260731` and assumes a true +5.00 pp lift.
+The decision-rule simulations use seed `20260801` with 40,000 replications per
+scenario and a 4% assumed payment-error rate. The payment-error margin remains
 provisional until payments and engineering approve it.
 
 ## Data-quality gates
@@ -483,3 +483,4 @@ The executable checks are in
 | 0.24 | Added Newcombe difference intervals, anomaly-date and PDP benchmark sensitivity, checkout lift scenarios, and the telemetry-gated checkout experiment priority |
 | 0.25 | Locked the provisional +5 pp planning MDE, buffered sample target, SRM gate, fixed-horizon analysis, and visibly seeded simulation workflow |
 | 0.26 | Reconciled checkout path telemetry, reclassified the 941 strict-path gaps as sequence/re-entry artifacts, and required dedicated sticky exposure logging |
+| 0.27 | Replaced the point-estimate ship hurdle after a simulated audit showed the original rule shipped a true +5 pp lift 28.6% of the time; sized the test for the payment-error guardrail and adopted a four-look O'Brien-Fleming plan of 6,216 users |

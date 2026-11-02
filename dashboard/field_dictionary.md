@@ -20,8 +20,12 @@ All rates are stored as decimal proportions unless the field name ends in
 | `checkout_telemetry_summary.csv` | Diagnostic metric | Sequence/re-entry diagnosis | A telemetry gap is not abandonment |
 | `checkout_telemetry_by_segment.csv` | Segment value | Gap-rate comparison | Denominator is purchases after checkout |
 | `checkout_lift_scenarios.csv` | Absolute lift assumption | Orders/revenue scenario calculator | Scenario, not forecast or MDE |
-| `mde_sensitivity.csv` | Candidate absolute MDE | Sample-size trade-off | Historical session volume is only a proxy |
+| `mde_sensitivity.csv` | Candidate absolute MDE | Primary-metric sample-size trade-off | Primary metric only; historical session volume is only a proxy |
 | `experiment_plan.csv` | One planning contract | A/B design summary | Instrumentation and stakeholder gates remain |
+| `experiment_operating_characteristics.csv` | Design × true lift × payment harm | Decision-rule audit chart | Simulated probabilities under assumed rates |
+| `experiment_sequential_boundaries.csv` | Planned look | O'Brien-Fleming monitoring schedule | Weeks use the historical traffic proxy |
+| `guardrail_margin_tradeoff.csv` | Payment-error margin | Margin versus sample and duration | Assumes a 4% payment-error rate |
+| `peeking_false_positive_rates.csv` | Monitoring policy | Cost of unadjusted repeated reads | No-effect simulation of z-statistic paths |
 | `simulation_only_result.csv` | One seeded simulation | Demonstrate analysis workflow | No evidentiary value about a real treatment |
 | `data_manifest.csv` | Published CSV | Lineage, row count, privacy, hash | Hash covers the corresponding committed CSV |
 
@@ -75,8 +79,21 @@ All rates are stored as decimal proportions unless the field name ends in
 | Field | Definition |
 |---|---|
 | `planned_absolute_mde_pp` | Provisional smallest detectable absolute lift, in percentage points |
-| `buffered_target_per_arm` | Core per-arm sample plus 5% operational buffer |
-| `historical_volume_proxy_weeks` | Sample ÷ historical checkout-session throughput ÷ seven |
+| `payment_error_margin_pp` | Provisional non-inferiority margin for the payment-error guardrail |
+| `primary_only_sample_per_arm` | Per-arm sample for the primary test alone, before guardrail sizing |
+| `core_sample_per_arm` | Per-arm maximum sample sized by simulating the full decision rule |
+| `enrollment_target_per_arm` | Core per-arm sample plus 5% operational buffer |
+| `max_proxy_weeks` | Enrollment target ÷ historical checkout-session throughput ÷ seven |
+| `expected_proxy_weeks_if_effective` | Mean duration when the true lift equals the MDE, including early stops |
+| `ship_probability_at_mde` | Simulated probability that the rule ships a true +MDE lift with no payment-error harm |
+| `ship_probability_no_effect` | Simulated probability of shipping a change with no effect |
+| `ship_probability_harmful_change` | Simulated probability of shipping a +MDE lift that raises payment errors by the full margin |
+| `original_plan_ship_probability_at_mde` | The same probability under the original rule and sample |
+| `ship_probability` | Operating-characteristic probability for one design and scenario |
+| `z_boundary` | O'Brien-Fleming z-statistic required to ship at a look |
+| `false_positive_rate` | Share of no-effect tests that would be declared significant under the monitoring policy |
+| `decision` | Pre-registered rule outcome for the simulated example |
+| `interval_lower_pp`, `interval_upper_pp` | Repeated confidence interval at the stopping look's boundary |
 | `randomization_unit` | Planned assignment unit; `user` |
 | `exposure_rule` | Sticky exposure event; repeated checkout cannot re-randomize |
 | `is_simulated` | `true` only for synthetic experiment output |

@@ -34,18 +34,27 @@ into a reproducible experiment plan:
 - 48.02% historical same-session completion as a planning proxy, not a promised
   user-level 24-hour baseline;
 - sticky 50/50 pseudonymous-user assignment and intention-to-treat analysis;
-- a provisional +5.00 percentage-point planning MDE;
-- 1,569 users per arm, or 1,648 per arm after a 5% operational buffer;
-- sample-size, baseline, and fixed-duration MDE sensitivity;
-- an SRM gate at `p < 0.001`;
-- a 95% Newcombe interval and pooled two-proportion z-test;
-- revenue per eligible user and a simulated payment-error guardrail; and
-- 20,000 seeded A/A and A/B repetitions validating approximately 5% false
-  positives and 80% power.
+- a provisional +5.00 percentage-point planning MDE, which needs 1,569 users
+  per arm for the primary metric alone, with sample-size, baseline, and
+  fixed-duration MDE sensitivity;
+- a decision-rule audit: simulated end to end, the original ship rule ships a
+  true +5.00 pp lift only 28.6% of the time, because it also required the point
+  estimate to reach the MDE and never sized the payment-error guardrail;
+- guardrail sizing and the payment-error margin trade-off;
+- a four-look O'Brien-Fleming plan with harm and futility stops, sized by
+  simulation at 6,216 users, that ships a true +5.00 pp lift 80% of the time
+  and a no-effect change 2% of the time;
+- the false-positive cost of unadjusted peeking (22% weekly, 38% daily);
+- one seeded synthetic experiment read look by look with SRM checks, repeated
+  confidence intervals, revenue per eligible user, and the payment-error
+  guardrail; and
+- design-contract checks that gate the build, plus
+  `outputs/experiment_design_summary.json`, which the dashboard and memo read.
 
-Every synthetic row includes `is_simulated = True`, and the notebook repeatedly
-labels the favorable seeded draw as a demonstration rather than a real
-experiment. Four additional charts are saved under `notebooks/figures/`.
+Every synthetic row includes `is_simulated = True`. The build asserts properties
+of the design, not the outcome of the single seeded draw, which happens to end
+with a significant lift blocked by the guardrail. Five additional charts are
+saved under `notebooks/figures/`.
 
 ## Run it
 

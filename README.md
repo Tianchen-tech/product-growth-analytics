@@ -34,9 +34,15 @@ two-page decision memo.
    revenue), almost entirely from duplicated and conflicting transaction IDs;
    one ID appears on 883 purchase events. The models are guarded by 43
    automated reconciliation checks.
-5. **Small improvements cannot be proven at this traffic.** Detecting a +5 pp
-   checkout lift needs about 3,300 users (about 8 weeks); a +0.5 pp lift would
-   need about 314,000 (about 15 years).
+5. **The first test plan would have missed a real winner most of the time.**
+   Simulated end to end, its ship rule caught a true +5 pp lift only 29% of the
+   time: it required the estimate itself to clear +5 pp and never sized the
+   payment-error guardrail. The corrected design ships on a significant lift,
+   sizes for the guardrail, and reads the test four times against
+   O'Brien-Fleming boundaries. It catches the same lift 80% of the time and
+   ships a no-effect change 2% of the time, with up to 6,216 users (about 16
+   weeks, 13 expected). Checking results daily instead would raise false
+   positives from 5% to 38%.
 
 ## Recommendation
 
@@ -45,13 +51,17 @@ assignment. The product-page loss is larger, but it is spread across hundreds
 of pages and its size swings with the benchmark chosen; checkout is a single,
 measurable step with a larger scenario (+25.9 orders at a +0.5 pp lift,
 against +21.5 for the best single product page). Historical data show where
-users leave, not why, so only the experiment can establish cause. The design
-is ready but not launch-ready: exposure logging, guardrails, and the minimum
-worthwhile effect still need sign-off.
+users leave, not why, so only the experiment can establish cause. Small wins
+cannot be proven at this traffic: a +0.5 pp lift would need about 314,000
+users (about 15 years). The design is ready but not launch-ready: exposure
+logging, the payment-error margin that sets the duration, and the MDE still
+need sign-off.
 
 | Ordered funnel | Checkout telemetry |
 |---|---|
 | ![Ordered funnel: the largest loss is view item to add to cart](dashboard/screenshots/02_ordered_funnel.png) | ![Checkout telemetry: 941 purchases re-entered checkout](dashboard/screenshots/04_checkout_telemetry.png) |
+| **Decision-rule audit** | **Sequential monitoring plan** |
+| ![Decision-rule audit: the original rule ships a true +5 pp lift 29% of the time, the final plan 80%](dashboard/screenshots/06_decision_rule_audit.png) | ![Sequential monitoring: daily peeking would raise false positives to 38%; four O'Brien-Fleming looks keep 5%](dashboard/screenshots/07_sequential_monitoring.png) |
 
 ## Skills demonstrated
 
@@ -60,8 +70,10 @@ worthwhile effect still need sign-off.
   run from a Python command-line runner.
 - **Product analytics:** ordered funnels, segment comparisons with Wilson
   intervals, weekly cohort retention, and benchmark-based opportunity sizing.
-- **Experimentation:** sample size and MDE trade-offs, sample-ratio-mismatch
-  checks, Newcombe intervals, guardrails, and a seeded simulation.
+- **Experimentation:** power analysis, a simulation audit of the decision
+  rule, non-inferiority guardrail sizing, group-sequential (O'Brien-Fleming)
+  monitoring with harm and futility stops, sample-ratio-mismatch checks, and
+  Newcombe intervals.
 - **Communication:** an interactive dashboard and a two-page decision memo
   that keep observed behavior, scenarios, and causal claims separate.
 
@@ -269,7 +281,9 @@ Observed profiling outputs and pass/fail interpretations are recorded in
 │   ├── 01_funnel_and_sensitivity.ipynb
 │   ├── 02_ab_test_design_and_simulation.ipynb
 │   ├── figures/
+│   ├── outputs/            # experiment design summary read by the dashboard
 │   └── README.md
+├── tests/                  # offline Python regression tests (make test)
 ├── dashboard/
 │   ├── README.md
 │   ├── field_dictionary.md
@@ -294,7 +308,7 @@ The two open items need a live checkout and stakeholders, so they are out of
 scope for a public-data case study.
 
 <details>
-<summary>All 37 work items, including each source-profiling check</summary>
+<summary>All 38 work items, including each source-profiling check</summary>
 
 - [x] Define the business problem and decision criteria.
 - [x] Lock the first version of the metric dictionary.
@@ -328,6 +342,7 @@ scope for a public-data case study.
 - [x] Select simplified checkout as the provisional experiment priority.
 - [x] Build the sample-size, MDE, SRM, confidence-interval, and seeded simulation workflow.
 - [x] Diagnose historical checkout sequence and repeated-event telemetry.
+- [x] Audit the decision rule by simulation; size the guardrail and adopt a four-look sequential plan.
 - [ ] Validate experiment exposure, guardrails, and current eligible-user throughput.
 - [ ] Obtain stakeholder approval for the provisional MDE and guardrail margins.
 - [x] Build and validate the aggregate-only interactive dashboard.
