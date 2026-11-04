@@ -34,9 +34,12 @@ separate.
   opportunity warnings.
 - **Checkout telemetry:** strict-sequence versus sequence-gap composition and
   segment comparisons.
-- **Experiment design:** adjustable checkout-lift scenario calculator, planned
-  MDE/sample contract, detectability trade-off, and a visibly labeled
-  simulation-only example.
+- **Experiment design:** the pre-registered plan, an adjustable checkout-lift
+  scenario calculator, a decision-rule audit chart comparing the original and
+  final ship rules, the O'Brien-Fleming monitoring plan with the cost of
+  unadjusted peeking, an interactive experiment planner (MDE, guardrail margin,
+  power, and number of looks), the detectability trade-off, and a visibly
+  labeled simulation-only example.
 - **Retention:** pooled weekly activity retention among complete follow-up
   cohorts.
 - **Downloads:** governed CSV extracts for Tableau, Power BI, or independent
@@ -55,12 +58,14 @@ make dashboard-dev     # local interactive preview
 ```
 
 Run `make extract` first whenever the BigQuery marts or analysis queries have
-changed. The current committed dashboard data comes from aggregate run
+changed, and `make ab-notebook` whenever the experiment design changes: the
+experiment numbers come from `notebooks/outputs/experiment_design_summary.json`.
+The current committed dashboard data comes from aggregate run
 `20260731T052813Z`.
 
 ## Published aggregate files
 
-`aggregated_data/` contains twelve dashboard-ready CSVs plus a manifest:
+`aggregated_data/` contains sixteen dashboard-ready CSVs plus a manifest:
 
 - KPI summary and monthly performance;
 - ordered funnel and reportable Device / New / Returning comparisons;
@@ -68,7 +73,9 @@ changed. The current committed dashboard data comes from aggregate run
 - pooled retention curve;
 - checkout telemetry summary and segment comparison;
 - checkout lift scenarios;
-- MDE sensitivity, experiment plan, and simulation-only result.
+- MDE sensitivity, experiment plan, decision-rule operating characteristics,
+  sequential boundaries, guardrail-margin trade-off, unadjusted peeking
+  false-positive rates, and simulation-only result.
 
 The [field dictionary](field_dictionary.md) documents grains, evidence labels,
 and usage cautions. `data_manifest.csv` records row counts, source run, privacy

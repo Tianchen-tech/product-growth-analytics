@@ -1427,6 +1427,407 @@ footer {
   margin-top: 2px;
 }
 
+.plan-subtitle {
+  color: var(--muted);
+  font-size: 11px;
+  margin: -14px 0 20px;
+}
+
+.plan-rule {
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.55;
+  margin: 16px 0 0;
+}
+
+.audit-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 36px;
+  grid-template-columns: 0.85fr 1.15fr;
+  margin-top: 22px;
+  padding: 30px;
+}
+
+.audit-copy h3 {
+  font-size: 26px;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  margin: 11px 0;
+}
+
+.audit-copy > p {
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.audit-factors {
+  display: grid;
+  margin: 18px 0;
+}
+
+.audit-factor {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  font-size: 10px;
+  gap: 12px;
+  grid-template-columns: minmax(130px, 1fr) minmax(70px, 1fr) 38px;
+  min-height: 34px;
+}
+
+.audit-factor > span {
+  color: var(--ink-soft);
+}
+
+.audit-factor strong {
+  font-size: 12px;
+  text-align: right;
+}
+
+.audit-factor-track {
+  background: var(--paper-deep);
+  height: 8px;
+  overflow: hidden;
+}
+
+.audit-factor-bar {
+  background: var(--muted);
+  height: 100%;
+  width: var(--bar-width);
+}
+
+.audit-factor.is-emphasis > span,
+.audit-factor.is-emphasis strong {
+  color: #a24733;
+  font-weight: 750;
+}
+
+.audit-factor.is-emphasis .audit-factor-bar {
+  background: var(--coral);
+}
+
+.audit-fix {
+  background: var(--teal-pale);
+  color: var(--teal-dark);
+  font-size: 10px;
+  line-height: 1.55;
+  margin: 0;
+  padding: 13px 15px;
+}
+
+.audit-chart {
+  margin: 0;
+}
+
+.audit-chart svg {
+  display: block;
+  height: auto;
+  width: 100%;
+}
+
+.chart-grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.chart-tick,
+.chart-axis-label {
+  fill: var(--muted);
+  font-size: 10px;
+}
+
+.chart-target {
+  stroke: var(--ink-soft);
+  stroke-dasharray: 2 4;
+  stroke-width: 1.4;
+}
+
+.chart-mde {
+  stroke: var(--amber);
+  stroke-dasharray: 6 5;
+  stroke-width: 1.6;
+}
+
+.chart-line {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-width: 2.6;
+}
+
+.chart-line.original,
+.chart-point.original {
+  stroke: var(--coral);
+}
+
+.chart-line.final,
+.chart-point.final {
+  stroke: var(--teal);
+}
+
+.chart-point {
+  fill: var(--panel);
+  stroke-width: 2.2;
+}
+
+.chart-callout {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.chart-callout.original {
+  fill: #a24733;
+}
+
+.chart-callout.final {
+  fill: var(--teal-dark);
+}
+
+.chart-legend {
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 10px;
+  gap: 8px 18px;
+  margin-top: 6px;
+}
+
+.chart-legend span {
+  align-items: center;
+  display: inline-flex;
+  gap: 7px;
+}
+
+.legend-line {
+  border-top: 3px solid var(--teal);
+  display: inline-block;
+  width: 18px;
+}
+
+.legend-line.original {
+  border-top-color: var(--coral);
+}
+
+.legend-line.target {
+  border-top: 2px dotted var(--ink-soft);
+}
+
+.monitoring-panel {
+  background: var(--ink);
+  color: var(--white);
+  display: grid;
+  gap: 48px;
+  grid-template-columns: 0.85fr 1.15fr;
+  margin-top: 22px;
+  padding: 30px;
+}
+
+.peeking-list {
+  border-top: 1px solid var(--line-dark);
+  display: grid;
+  margin-top: 18px;
+}
+
+.peeking-row {
+  align-items: center;
+  border-bottom: 1px solid var(--line-dark);
+  display: flex;
+  font-size: 10px;
+  justify-content: space-between;
+  min-height: 34px;
+}
+
+.peeking-row span {
+  color: #aebac5;
+}
+
+.peeking-row strong {
+  font-size: 13px;
+}
+
+.peeking-row:last-child strong {
+  color: #80d4cd;
+}
+
+.boundary-list {
+  align-content: start;
+  display: grid;
+}
+
+.boundary-header,
+.boundary-row {
+  align-items: center;
+  display: grid;
+  font-size: 10px;
+  gap: 13px;
+  grid-template-columns: 40px 76px 64px minmax(140px, 1fr);
+}
+
+.boundary-header {
+  color: #80d4cd;
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  padding-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.boundary-row {
+  border-top: 1px solid var(--line-dark);
+  color: #aebac5;
+  min-height: 46px;
+}
+
+.boundary-value {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(80px, 1fr) 38px;
+}
+
+.boundary-value strong {
+  color: var(--white);
+  font-size: 13px;
+  text-align: right;
+}
+
+.boundary-note {
+  border-top: 1px solid var(--line-dark);
+  color: #aebac5;
+  font-size: 10px;
+  line-height: 1.55;
+  margin: 0;
+  padding-top: 14px;
+}
+
+.planner-panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  display: grid;
+  gap: 30px;
+  grid-template-columns: 0.8fr 1.1fr 1.1fr;
+  margin-top: 22px;
+  padding: 30px;
+}
+
+.planner-copy h3 {
+  font-size: 26px;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+  margin: 11px 0;
+}
+
+.planner-copy p {
+  color: var(--ink-soft);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.planner-controls {
+  display: grid;
+  gap: 18px;
+}
+
+.planner-slider label {
+  color: var(--ink-soft);
+  display: flex;
+  font-size: 11px;
+  font-weight: 700;
+  justify-content: space-between;
+}
+
+.planner-slider output {
+  color: var(--teal-dark);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.planner-slider input[type="range"] {
+  accent-color: var(--teal-dark);
+  cursor: pointer;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.planner-choice {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.planner-choice > span {
+  color: var(--ink-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.planner-output {
+  align-content: start;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.planner-output > div {
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  padding: 16px;
+}
+
+.planner-output strong,
+.planner-output span {
+  display: block;
+}
+
+.planner-output strong {
+  color: var(--teal-dark);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.planner-output span {
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.45;
+  margin-top: 4px;
+}
+
+/* Let single-column grid children shrink instead of overflowing panels. */
+.audit-panel > *,
+.monitoring-panel > *,
+.planner-panel > * {
+  min-width: 0;
+}
+
+@media (max-width: 620px) {
+  .boundary-header,
+  .boundary-row {
+    gap: 8px;
+    grid-template-columns: 30px 56px 50px minmax(0, 1fr);
+  }
+
+  .boundary-value {
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 32px;
+  }
+
+  /* The chart scales down with its container, so enlarge its text. */
+  .chart-tick,
+  .chart-axis-label {
+    font-size: 16px;
+  }
+
+  .chart-callout {
+    font-size: 20px;
+  }
+}
+
 .retention-layout {
   display: grid;
   gap: 22px;
@@ -1585,6 +1986,14 @@ footer p {
 }
 
 @media (max-width: 1080px) {
+  .planner-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .planner-copy {
+    grid-column: 1 / -1;
+  }
+
   .hero-grid {
     gap: 30px;
     grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
@@ -1638,6 +2047,9 @@ footer p {
   .telemetry-overview,
   .experiment-grid,
   .mde-panel,
+  .audit-panel,
+  .monitoring-panel,
+  .planner-panel,
   .retention-layout {
     grid-template-columns: 1fr;
   }

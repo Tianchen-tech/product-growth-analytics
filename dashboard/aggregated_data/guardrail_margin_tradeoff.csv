@@ -1,0 +1,6 @@
+margin_pp,guardrail_power_at_original_core,fixed_core_per_arm,sequential_core_per_arm,enrollment_total,max_proxy_weeks,expected_proxy_weeks_if_effective
+1.0,0.297834,6040,6240,13104,33.203,27.1958
+1.5,0.573002,2880,2960,6216,15.7501,13.3908
+2.0,0.81559,2020,2100,4410,11.1741,9.5409
+2.5,0.946665,1710,1790,3760,9.5271,8.0202
+3.0,0.990044,1600,1720,3612,9.1521,7.5215

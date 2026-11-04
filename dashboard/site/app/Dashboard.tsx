@@ -41,11 +41,11 @@ const currencyFormat = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0,
 });
 
-const monthLabels: Record<string, string> = {
-  "2020-11": "Nov 2020",
-  "2020-12": "Dec 2020",
-  "2021-01": "Jan 2021",
-};
+const monthFormat = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 const stageLabels: Record<string, string> = {
   view_item: "View item",
@@ -76,9 +76,21 @@ function formatPercent(value: number, digits = 2): string {
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-function formatPp(value: number, digits = 2): string {
+function formatSigned(value: number, digits = 2): string {
   const sign = value > 0 ? "+" : "";
-  return `${sign}${value.toFixed(digits)} pp`;
+  return `${sign}${value.toFixed(digits)}`;
+}
+
+function formatPp(value: number, digits = 2): string {
+  return `${formatSigned(value, digits)} pp`;
+}
+
+function formatMonth(isoDateOrMonth: string): string {
+  const [year, month] = isoDateOrMonth.split("-").map(Number);
+  if (!year || !month) {
+    return isoDateOrMonth;
+  }
+  return monthFormat.format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
 function barStyle(width: number): CSSProperties {
@@ -95,6 +107,14 @@ function telemetryMetric(key: string) {
   return metric;
 }
 
+function funnelStage(stageName: string) {
+  const stage = data.funnel.find((item) => item.stageName === stageName);
+  if (!stage) {
+    throw new Error(`Missing funnel stage: ${stageName}`);
+  }
+  return stage;
+}
+
 const checkoutPurchase = telemetryMetric("checkout_purchase_rate");
 const strictCoverage = telemetryMetric("strict_coverage_of_purchases");
 const sequenceGap = telemetryMetric("purchase_sequence_gap");
@@ -102,6 +122,115 @@ const repeatedCheckout = telemetryMetric("repeated_checkout_start");
 const gapShippingBefore = telemetryMetric("gap_shipping_before_checkout");
 const gapPaymentBefore = telemetryMetric("gap_payment_before_purchase");
 const gapNoShipping = telemetryMetric("gap_no_shipping_anywhere");
+
+// Narrative copy reads its numbers from the generated data so the prose
+// cannot drift from the charts when the aggregates are refreshed.
+const viewToCartStage = funnelStage("add_to_cart");
+const sequenceGapCount = numberFormat.format(sequenceGap.numeratorSessions);
+const topPage = data.pageOpportunities[0];
+const smallestMde = data.mdeSensitivity[0];
+const dailyPeeking = data.peeking.reduce((most, row) =>
+  row.looks > most.looks ? row : most,
+);
+const maxBoundary = Math.max(
+  ...data.sequentialBoundaries.map((row) => row.zBoundary),
+);
+
+// Planner inputs. Z values are fixed so the server render and the browser
+// agree exactly; power options match the precomputed inflation factors.
+const Z_ALPHA = 1.959963984540054;
+type PlannerPower = "0.70" | "0.80" | "0.90";
+const Z_POWER: Record<PlannerPower, number> = {
+  "0.70": 0.5244005127080407,
+  "0.80": 0.8416212335729143,
+  "0.90": 1.2815515655446004,
+};
+const plannerPowers: PlannerPower[] = ["0.70", "0.80", "0.90"];
+type PlannerLooks = keyof typeof data.planner.inflationFactors;
+const plannerLooks = Object.keys(
+  data.planner.inflationFactors,
+) as PlannerLooks[];
+
+function normalCdf(value: number): number {
+  // Abramowitz and Stegun 7.1.26 erf approximation (absolute error < 1.5e-7).
+  const x = Math.abs(value) / Math.SQRT2;
+  const t = 1 / (1 + 0.3275911 * x);
+  const erf =
+    1 -
+    ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t -
+      0.284496736) *
+      t +
+      0.254829592) *
+      t *
+      Math.exp(-x * x);
+  return value >= 0 ? 0.5 * (1 + erf) : 0.5 * (1 - erf);
+}
+
+function planExperiment(
+  mdePp: number,
+  marginPp: number,
+  power: PlannerPower,
+  looks: PlannerLooks,
+) {
+  const {
+    baselineRate,
+    paymentErrorRate,
+    unitsPerDay,
+    operationalBuffer,
+    inflationFactors,
+    unadjustedFalsePositiveRates,
+  } = data.planner;
+  const lift = mdePp / 100;
+  const margin = marginPp / 100;
+  const treatmentRate = baselineRate + lift;
+  const zPower = Z_POWER[power];
+  const primaryVariance =
+    baselineRate * (1 - baselineRate) + treatmentRate * (1 - treatmentRate);
+  const guardrailVariance = 2 * paymentErrorRate * (1 - paymentErrorRate);
+  const midpoint = (baselineRate + treatmentRate) / 2;
+  const primaryOnly = Math.ceil(
+    (Z_ALPHA * Math.sqrt(2 * midpoint * (1 - midpoint)) +
+      zPower * Math.sqrt(primaryVariance)) **
+      2 /
+      lift ** 2,
+  );
+  const guardrailOnly = Math.ceil(
+    ((Z_ALPHA + zPower) ** 2 * guardrailVariance) / margin ** 2,
+  );
+
+  // Smallest per-arm sample, in steps of 10, where both tests pass with the
+  // target joint probability (normal approximation, independent outcomes).
+  let perArm = 10;
+  while (perArm < 2_000_000) {
+    const primary = normalCdf(
+      lift / Math.sqrt(primaryVariance / perArm) - Z_ALPHA,
+    );
+    const guardrail = normalCdf(
+      margin / Math.sqrt(guardrailVariance / perArm) - Z_ALPHA,
+    );
+    if (primary * guardrail >= Number(power)) {
+      break;
+    }
+    perArm += 10;
+  }
+  const enrollmentPerArm = Math.ceil(
+    Math.ceil(perArm * inflationFactors[looks][power]) *
+      (1 + operationalBuffer),
+  );
+  const enrollmentTotal = 2 * enrollmentPerArm;
+  const requirementRatio = guardrailOnly / primaryOnly;
+  return {
+    enrollmentTotal,
+    weeks: enrollmentTotal / unitsPerDay / 7,
+    bindingConstraint:
+      requirementRatio > 1.25
+        ? "Guardrail"
+        : requirementRatio < 0.8
+          ? "Primary metric"
+          : "Both tests",
+    unadjustedFalsePositiveRate: unadjustedFalsePositiveRates[looks],
+  };
+}
 
 
 export function Dashboard() {
@@ -144,6 +273,8 @@ export function Dashboard() {
   );
 
   const retentionRows = data.retention.filter((row) => row.week > 0);
+  const firstRetention = retentionRows[0];
+  const lastRetention = retentionRows[retentionRows.length - 1];
   const maxRetentionRate = Math.max(
     ...retentionRows.map((row) => row.rate),
     0.0001,
@@ -172,15 +303,17 @@ export function Dashboard() {
       );
       if (mobile && desktop) {
         return {
-          title: "No observed mobile deficit",
+          title:
+            mobile.conversionRate >= desktop.conversionRate
+              ? "No observed mobile deficit"
+              : "Mobile trails desktop",
           copy: `Mobile converted at ${formatPercent(
             mobile.conversionRate,
           )} versus ${formatPercent(
             desktop.conversionRate,
-          )} on desktop. The +${(
-            (mobile.conversionRate - desktop.conversionRate) *
-            100
-          ).toFixed(2)} pp descriptive difference is not a product-treatment effect.`,
+          )} on desktop. The ${formatPp(
+            (mobile.conversionRate - desktop.conversionRate) * 100,
+          )} descriptive difference is not a product-treatment effect.`,
         };
       }
     }
@@ -240,16 +373,17 @@ export function Dashboard() {
           <div className="hero-copy">
             <div className="eyebrow">
               <span className="status-dot" />
-              Historical GA4 evidence · 92 observed days
+              Historical GA4 evidence ·{" "}
+              {data.metadata.observedCalendarDays} observed days
             </div>
             <h1>
               Test a simpler checkout.
               <span>Do not claim the cause yet.</span>
             </h1>
             <p className="hero-lede">
-              Checkout is the most actionable next experiment, but the apparent
-              941-purchase telemetry gap is a sequence and re-entry artifact—not
-              941 abandoned purchases.
+              Checkout is the most actionable next experiment, but the apparent{" "}
+              {sequenceGapCount}-purchase telemetry gap is a sequence and
+              re-entry artifact—not {sequenceGapCount} abandoned purchases.
             </p>
             <div className="hero-actions">
               <a className="primary-action" href="#experiment">
@@ -277,7 +411,7 @@ export function Dashboard() {
               <div>
                 <CheckCircle2 aria-hidden="true" size={18} />
                 <span>
-                  <strong>48.02%</strong>
+                  <strong>{formatPercent(checkoutPurchase.rate)}</strong>
                   checkout → purchase
                 </span>
               </div>
@@ -291,8 +425,10 @@ export function Dashboard() {
               <div>
                 <FlaskConical aria-hidden="true" size={18} />
                 <span>
-                  <strong>3,296</strong>
-                  buffered experiment target
+                  <strong>
+                    {numberFormat.format(data.experimentPlan.enrollmentTotal)}
+                  </strong>
+                  max experiment users
                 </span>
               </div>
             </div>
@@ -384,7 +520,7 @@ export function Dashboard() {
           {data.monthly.map((month) => (
             <div className="month-card" key={month.month}>
               <div>
-                <span>{monthLabels[month.month] ?? month.month}</span>
+                <span>{formatMonth(month.month)}</span>
                 <strong>{compactNumberFormat.format(month.sessions)}</strong>
                 <small>sessions</small>
               </div>
@@ -407,7 +543,11 @@ export function Dashboard() {
             <span className="section-index">02 / Ordered funnel</span>
             <h2 id="funnel-title">The largest absolute loss comes first</h2>
           </div>
-          <div className="segmented-control" aria-label="Funnel rate view">
+          <div
+            className="segmented-control"
+            role="group"
+            aria-label="Funnel rate view"
+          >
             <button
               type="button"
               aria-pressed={funnelMode === "step"}
@@ -444,9 +584,11 @@ export function Dashboard() {
                   key={stage.stageName}
                 >
                   <div className="funnel-label">
-                    <span>0{stage.stageIndex}</span>
+                    <span>{String(stage.stageIndex).padStart(2, "0")}</span>
                     <div>
-                      <strong>{stageLabels[stage.stageName]}</strong>
+                      <strong>
+                        {stageLabels[stage.stageName] ?? stage.stageName}
+                      </strong>
                       <small>
                         {numberFormat.format(stage.sessions)} sessions
                       </small>
@@ -475,12 +617,15 @@ export function Dashboard() {
 
           <aside className="insight-card bottleneck-card">
             <span className="insight-label">Largest observed loss</span>
-            <strong>62,640 sessions</strong>
+            <strong>
+              {numberFormat.format(viewToCartStage.lostSessions)} sessions
+            </strong>
             <h3>View item → add to cart</h3>
             <p>
-              Only 18.67% of product-view sessions proceed to cart. This is the
-              broadest behavioral loss, while checkout remains the clearer
-              intervention to test.
+              Only {formatPercent(viewToCartStage.stepConversionRate)} of
+              product-view sessions proceed to cart. This is the broadest
+              behavioral loss, while checkout remains the clearer intervention
+              to test.
             </p>
             <div className="insight-rule">
               <Info aria-hidden="true" size={17} />
@@ -503,7 +648,11 @@ export function Dashboard() {
             <span className="section-index">03 / Segment diagnosis</span>
             <h2 id="segments-title">Composition matters more than device</h2>
           </div>
-          <div className="segmented-control" aria-label="Segment dimension">
+          <div
+            className="segmented-control"
+            role="group"
+            aria-label="Segment dimension"
+          >
             <button
               type="button"
               aria-pressed={segmentType === "Device"}
@@ -521,7 +670,7 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="metric-tabs" aria-label="Segment metric">
+        <div className="metric-tabs" role="group" aria-label="Segment metric">
           {metricOptions.map((option) => (
             <button
               type="button"
@@ -592,7 +741,7 @@ export function Dashboard() {
           </div>
           <p>
             Scenario: each eligible page reaches the unweighted P75 view-to-add
-            benchmark of 4.44%.
+            benchmark of {formatPercent(topPage.benchmarkRate)}.
           </p>
         </div>
 
@@ -631,14 +780,15 @@ export function Dashboard() {
           <aside className="top-opportunity">
             <Target aria-hidden="true" size={22} />
             <span className="insight-label">Top governed scenario</span>
-            <h3>{data.pageOpportunities[0].title}</h3>
+            <h3>{topPage.title}</h3>
             <div className="opportunity-number">
-              +{data.pageOpportunities[0].scenarioIncrementalOrders.toFixed(1)}
+              +{topPage.scenarioIncrementalOrders.toFixed(1)}
               <span>orders in the historical-window scenario</span>
             </div>
             <p>
-              This page combines 3,830 views with a 1.20% view-to-add rate. It
-              is a prioritization signal, not a forecast.
+              This page combines {numberFormat.format(topPage.viewSessions)}{" "}
+              views with a {formatPercent(topPage.viewToAddRate)} view-to-add
+              rate. It is a prioritization signal, not a forecast.
             </p>
             <div className="warning-note">
               <Info aria-hidden="true" size={17} />
@@ -657,7 +807,9 @@ export function Dashboard() {
         <div className="section-heading inverted">
           <div>
             <span className="section-index">05 / Checkout telemetry</span>
-            <h2 id="telemetry-title">The 941-session gap is not abandonment</h2>
+            <h2 id="telemetry-title">
+              {`The ${sequenceGapCount}-session gap is not abandonment`}
+            </h2>
           </div>
           <p>
             Re-entry and repeated begin_checkout events make strict event order
@@ -683,6 +835,7 @@ export function Dashboard() {
             </div>
             <div
               className="composition-bar"
+              role="img"
               aria-label={`${formatPercent(
                 strictCoverage.rate,
               )} strict sequence and ${formatPercent(
@@ -740,6 +893,7 @@ export function Dashboard() {
             </div>
             <div
               className="segmented-control dark"
+              role="group"
               aria-label="Telemetry segment dimension"
             >
               <button
@@ -804,34 +958,44 @@ export function Dashboard() {
             <div className="card-icon">
               <FlaskConical aria-hidden="true" size={21} />
             </div>
-            <span className="insight-label">Provisional planning contract</span>
+            <span className="insight-label">Pre-registered plan</span>
             <h3>+{data.experimentPlan.plannedMdePp.toFixed(0)} pp MDE</h3>
+            <p className="plan-subtitle">
+              {data.experimentPlan.plannedLooks} planned looks · O&apos;Brien-Fleming
+              boundaries · payment-error margin{" "}
+              {formatPp(data.experimentPlan.paymentErrorMarginPp, 1)}
+            </p>
             <div className="plan-stat-grid">
               <div>
                 <strong>
-                  {numberFormat.format(
-                    data.experimentPlan.bufferedTargetPerArm,
-                  )}
+                  {numberFormat.format(data.experimentPlan.enrollmentTotal)}
                 </strong>
-                <span>per arm, buffered</span>
+                <span>users at most</span>
+              </div>
+              <div>
+                <strong>{data.experimentPlan.maxProxyWeeks.toFixed(1)}</strong>
+                <span>max proxy weeks</span>
               </div>
               <div>
                 <strong>
-                  {numberFormat.format(data.experimentPlan.bufferedTotal)}
+                  {data.experimentPlan.expectedWeeksIfEffective.toFixed(1)}
                 </strong>
-                <span>total target</span>
-              </div>
-              <div>
-                <strong>{data.experimentPlan.proxyWeeks.toFixed(2)}</strong>
-                <span>proxy weeks</span>
+                <span>expected weeks if it works</span>
               </div>
               <div>
                 <strong>
-                  {formatPercent(data.experimentPlan.targetPower, 0)}
+                  {formatPercent(data.experimentPlan.shipProbabilityAtMde, 0)}
                 </strong>
-                <span>target power</span>
+                <span>chance a true +5 pp lift ships</span>
               </div>
             </div>
+            <p className="plan-rule">
+              Ship only when the lift crosses the look&apos;s boundary and the
+              payment-error bound stays inside the margin. A no-effect change
+              ships {formatPercent(data.experimentPlan.shipProbabilityNoEffect, 1)}{" "}
+              of the time; one that raises payment errors by the full margin,{" "}
+              {formatPercent(data.experimentPlan.shipProbabilityHarmful, 1)}.
+            </p>
             <div className="exposure-rule">
               <ShieldCheck aria-hidden="true" size={18} />
               <span>
@@ -865,6 +1029,7 @@ export function Dashboard() {
               max="5"
               step="0.25"
               value={scenarioLiftPp}
+              aria-valuetext={formatPp(scenarioLiftPp)}
               onChange={(event) =>
                 setScenarioLiftPp(Number(event.target.value))
               }
@@ -894,14 +1059,122 @@ export function Dashboard() {
           </article>
         </div>
 
+        <div className="audit-panel">
+          <div className="audit-copy">
+            <span className="insight-label">Decision-rule audit</span>
+            <h3>
+              {`The first plan would ship a real +5 pp winner only ${formatPercent(
+                data.originalPlanAudit.shipProbabilityAtMde,
+                0,
+              )} of the time`}
+            </h3>
+            <p>
+              It enrolled{" "}
+              {numberFormat.format(data.originalPlanAudit.enrollmentTotal)} users
+              and was powered for significance alone, then also required the
+              estimate to clear +5 pp and an unsized payment-error check. A
+              seeded simulation of the whole rule exposed the gap.
+            </p>
+            <div className="audit-factors">
+              <AuditFactor
+                label="Interval above zero"
+                value={data.originalPlanAudit.primaryIntervalAtMde}
+              />
+              <AuditFactor
+                label="Estimate at least +5 pp"
+                value={data.originalPlanAudit.pointEstimateAtMde}
+              />
+              <AuditFactor
+                label="Payment-error check passes"
+                value={data.originalPlanAudit.guardrailAtMde}
+              />
+              <AuditFactor
+                label="All three: ships"
+                value={data.originalPlanAudit.shipProbabilityAtMde}
+                emphasis
+              />
+            </div>
+            <p className="audit-fix">
+              The fix: ship on a significant lift instead of a point-estimate
+              hurdle, and size the test for the payment-error guardrail too.
+              When a true winner still fails to ship, the guardrail is usually
+              why ({formatPercent(data.experimentPlan.guardrailBlockAtMde, 0)} of
+              runs).
+            </p>
+          </div>
+          <DecisionAuditChart />
+        </div>
+
+        <div className="monitoring-panel">
+          <div className="mde-copy">
+            <span className="insight-label">Monitoring without p-hacking</span>
+            <h3>
+              {`Checking daily would push false positives to ${formatPercent(
+                dailyPeeking.falsePositiveRate,
+                0,
+              )}`}
+            </h3>
+            <p>
+              Every unplanned look is another chance for noise to cross the
+              line. Four planned looks with O&apos;Brien-Fleming boundaries keep
+              the overall rate at 5%, let a clear result stop early, and stop
+              the test at the halfway look if the lift is not positive.
+            </p>
+            <div className="peeking-list">
+              {data.peeking.map((row) => (
+                <div className="peeking-row" key={row.monitoring}>
+                  <span>{row.monitoring}</span>
+                  <strong>{formatPercent(row.falsePositiveRate, 1)}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="boundary-list">
+            <div className="boundary-header">
+              <span>Look</span>
+              <span>Proxy week</span>
+              <span>Users</span>
+              <span>z needed to ship</span>
+            </div>
+            {data.sequentialBoundaries.map((row) => (
+              <div className="boundary-row" key={row.look}>
+                <span>{row.look}</span>
+                <span>{row.proxyWeek.toFixed(1)}</span>
+                <span>{numberFormat.format(row.enrolledTotal)}</span>
+                <div className="boundary-value">
+                  <div className="mde-bar-track">
+                    <div
+                      className="mde-bar"
+                      style={barStyle((row.zBoundary / maxBoundary) * 100)}
+                    />
+                  </div>
+                  <strong>{row.zBoundary.toFixed(2)}</strong>
+                </div>
+              </div>
+            ))}
+            <p className="boundary-note">
+              A fixed-sample test would use 1.96 at a single final read.
+              Expected duration:{" "}
+              {data.experimentPlan.expectedWeeksIfEffective.toFixed(1)} weeks if
+              the lift is real,{" "}
+              {data.experimentPlan.expectedWeeksIfNoEffect.toFixed(1)} weeks if
+              it is not.
+            </p>
+          </div>
+        </div>
+
+        <ExperimentPlanner />
+
         <div className="mde-panel">
           <div className="mde-copy">
             <span className="insight-label">Detectability trade-off</span>
             <h3>Small effects are not feasible at this traffic proxy</h3>
             <p>
-              A +0.50 pp product scenario would need roughly 313,580 units and
-              795 proxy weeks. Opportunity size and experimental detectability
-              are separate decisions.
+              A {formatPp(smallestMde.absoluteMdePp)} product scenario would need
+              roughly {numberFormat.format(smallestMde.requiredTotal)} units and{" "}
+              {numberFormat.format(Math.round(smallestMde.proxyWeeks))} proxy
+              weeks for the primary metric alone. Opportunity size and
+              experimental detectability are separate decisions.
             </p>
           </div>
           <div className="mde-list">
@@ -935,7 +1208,8 @@ export function Dashboard() {
             <FlaskConical aria-hidden="true" size={20} />
             <span>
               <strong>Simulation only</strong>
-              Seed {data.simulationOnly.seed}; no causal evidence
+              Seed {data.simulationOnly.seed}; true lift{" "}
+              {formatPp(data.simulationOnly.trueLiftPp)}; no causal evidence
             </span>
           </div>
           <div>
@@ -948,11 +1222,21 @@ export function Dashboard() {
             <strong>{formatPercent(data.simulationOnly.treatmentRate)}</strong>
           </div>
           <div className="simulation-effect">
-            <span>Estimated difference</span>
-            <strong>+{data.simulationOnly.differencePp.toFixed(2)} pp</strong>
+            <span>
+              Look {data.simulationOnly.stoppingLook} of{" "}
+              {data.simulationOnly.plannedLooks}: lift{" "}
+              {formatPp(data.simulationOnly.differencePp)} (z{" "}
+              {data.simulationOnly.zStatistic.toFixed(2)} vs{" "}
+              {data.simulationOnly.zBoundary.toFixed(2)})
+            </span>
+            <strong>{data.simulationOnly.decision}</strong>
             <small>
-              95% CI +{data.simulationOnly.ci95LowerPp.toFixed(2)} to +
-              {data.simulationOnly.ci95UpperPp.toFixed(2)} pp
+              Payment-error bound{" "}
+              {formatPp(data.simulationOnly.paymentErrorUpperPp)} against a{" "}
+              {formatPp(data.simulationOnly.paymentErrorMarginPp)} margin. A
+              real winner is blocked this way{" "}
+              {formatPercent(data.experimentPlan.guardrailBlockAtMde, 0)} of the
+              time.
             </small>
           </div>
         </aside>
@@ -991,13 +1275,12 @@ export function Dashboard() {
             ))}
           </div>
           <aside className="retention-callout">
-            <span>W1 observed retention</span>
-            <strong>{formatPercent(retentionRows[0].rate)}</strong>
+            <span>W{firstRetention.week} observed retention</span>
+            <strong>{formatPercent(firstRetention.rate)}</strong>
             <p>
-              W8 falls to{" "}
-              {formatPercent(retentionRows[retentionRows.length - 1].rate)}.
-              This informs future traffic expectations; it is not lifetime
-              value.
+              W{lastRetention.week} falls to{" "}
+              {formatPercent(lastRetention.rate)}. This informs future traffic
+              expectations; it is not lifetime value.
             </p>
           </aside>
         </div>
@@ -1053,7 +1336,10 @@ export function Dashboard() {
           </p>
         </div>
         <div className="footer-notes">
-          <span>Historical sample · Nov 2020–Jan 2021</span>
+          <span>
+            Historical sample · {formatMonth(data.metadata.analysisStartDate)}–
+            {formatMonth(data.metadata.analysisEndDate)}
+          </span>
           <span>Opportunity estimates are scenarios</span>
           <span>Experiment output is simulated</span>
         </div>
@@ -1121,5 +1407,341 @@ function DownloadCard({
       </div>
       <ArrowRight aria-hidden="true" size={18} />
     </a>
+  );
+}
+
+
+function AuditFactor({
+  label,
+  value,
+  emphasis = false,
+}: {
+  label: string;
+  value: number;
+  emphasis?: boolean;
+}) {
+  return (
+    <div className={`audit-factor${emphasis ? " is-emphasis" : ""}`}>
+      <span>{label}</span>
+      <div className="audit-factor-track">
+        <div className="audit-factor-bar" style={barStyle(value * 100)} />
+      </div>
+      <strong>{formatPercent(value, 0)}</strong>
+    </div>
+  );
+}
+
+
+const CHART = { width: 560, height: 300, left: 58, right: 18, top: 18, bottom: 46 };
+
+function DecisionAuditChart() {
+  const original = data.operatingCharacteristics.filter(
+    (row) => row.design === "original_plan" && row.paymentHarmPp === 0,
+  );
+  const final = data.operatingCharacteristics.filter(
+    (row) => row.design === "final_plan" && row.paymentHarmPp === 0,
+  );
+  const maxLift = Math.max(...final.map((row) => row.trueLiftPp));
+  const mde = data.experimentPlan.plannedMdePp;
+  const plotRight = CHART.width - CHART.right;
+  const plotBottom = CHART.height - CHART.bottom;
+  const x = (lift: number) =>
+    CHART.left + (lift / maxLift) * (plotRight - CHART.left);
+  const y = (probability: number) =>
+    CHART.top + (1 - probability) * (plotBottom - CHART.top);
+  const path = (rows: typeof final) =>
+    rows
+      .map(
+        (row, index) =>
+          `${index ? "L" : "M"}${x(row.trueLiftPp).toFixed(1)},${y(
+            row.shipProbability,
+          ).toFixed(1)}`,
+      )
+      .join(" ");
+  const originalAtMde = original.find((row) => row.trueLiftPp === mde);
+  const finalAtMde = final.find((row) => row.trueLiftPp === mde);
+  const summary = `Probability that each rule ships the change, for true lifts from 0 to ${maxLift} percentage points. At a true +${mde} pp lift the original rule ships ${formatPercent(
+    originalAtMde?.shipProbability ?? 0,
+    0,
+  )} of the time and the final plan ${formatPercent(
+    finalAtMde?.shipProbability ?? 0,
+    0,
+  )}.`;
+
+  return (
+    <figure className="audit-chart">
+      <svg
+        viewBox={`0 0 ${CHART.width} ${CHART.height}`}
+        role="img"
+        aria-label={summary}
+      >
+        {[0, 0.2, 0.4, 0.6, 0.8, 1].map((tick) => (
+          <g key={tick}>
+            <line
+              className="chart-grid"
+              x1={CHART.left}
+              x2={plotRight}
+              y1={y(tick)}
+              y2={y(tick)}
+            />
+            <text
+              className="chart-tick"
+              x={CHART.left - 8}
+              y={y(tick)}
+              dy="0.32em"
+              textAnchor="end"
+            >
+              {`${Math.round(tick * 100)}%`}
+            </text>
+          </g>
+        ))}
+        {final.map((row) => (
+          <text
+            key={`tick-${row.trueLiftPp}`}
+            className="chart-tick"
+            x={x(row.trueLiftPp)}
+            y={plotBottom + 18}
+            textAnchor="middle"
+          >
+            {`+${row.trueLiftPp}`}
+          </text>
+        ))}
+        <text
+          className="chart-axis-label"
+          x={(CHART.left + plotRight) / 2}
+          y={CHART.height - 6}
+          textAnchor="middle"
+        >
+          True lift in 24-hour conversion (pp)
+        </text>
+        <line
+          className="chart-target"
+          x1={CHART.left}
+          x2={plotRight}
+          y1={y(data.experimentPlan.targetPower)}
+          y2={y(data.experimentPlan.targetPower)}
+        />
+        <line
+          className="chart-mde"
+          x1={x(mde)}
+          x2={x(mde)}
+          y1={CHART.top}
+          y2={plotBottom}
+        />
+        <path className="chart-line original" d={path(original)} />
+        <path className="chart-line final" d={path(final)} />
+        {original.map((row) => (
+          <circle
+            key={`original-${row.trueLiftPp}`}
+            className="chart-point original"
+            cx={x(row.trueLiftPp)}
+            cy={y(row.shipProbability)}
+            r={3.5}
+          />
+        ))}
+        {final.map((row) => (
+          <circle
+            key={`final-${row.trueLiftPp}`}
+            className="chart-point final"
+            cx={x(row.trueLiftPp)}
+            cy={y(row.shipProbability)}
+            r={3.5}
+          />
+        ))}
+        {originalAtMde ? (
+          <text
+            className="chart-callout original"
+            x={x(mde) + 9}
+            y={y(originalAtMde.shipProbability)}
+            dy="0.32em"
+          >
+            {formatPercent(originalAtMde.shipProbability, 0)}
+          </text>
+        ) : null}
+        {finalAtMde ? (
+          <text
+            className="chart-callout final"
+            x={x(mde) - 9}
+            y={y(finalAtMde.shipProbability) - 12}
+            textAnchor="end"
+          >
+            {formatPercent(finalAtMde.shipProbability, 0)}
+          </text>
+        ) : null}
+      </svg>
+      <figcaption className="chart-legend">
+        <span>
+          <i className="legend-line original" />
+          {`Original rule (${numberFormat.format(
+            data.originalPlanAudit.enrollmentTotal,
+          )} users)`}
+        </span>
+        <span>
+          <i className="legend-line final" />
+          {`Final plan (up to ${numberFormat.format(
+            data.experimentPlan.enrollmentTotal,
+          )} users)`}
+        </span>
+        <span>
+          <i className="legend-line target" />
+          80% target · dashed line = +5 pp MDE
+        </span>
+      </figcaption>
+    </figure>
+  );
+}
+
+
+function ExperimentPlanner() {
+  const [mdePp, setMdePp] = useState(data.experimentPlan.plannedMdePp);
+  const [marginPp, setMarginPp] = useState(
+    data.experimentPlan.paymentErrorMarginPp,
+  );
+  const [power, setPower] = useState<PlannerPower>("0.80");
+  const [looks, setLooks] = useState<PlannerLooks>(
+    String(data.experimentPlan.plannedLooks) as PlannerLooks,
+  );
+  const plan = useMemo(
+    () => planExperiment(mdePp, marginPp, power, looks),
+    [mdePp, marginPp, power, looks],
+  );
+  const peekingLabel =
+    looks === "1"
+      ? "false positives with one final read"
+      : `false positives if all ${looks} looks used 1.96 (boundaries keep 5%)`;
+
+  return (
+    <div className="planner-panel">
+      <div className="planner-copy">
+        <span className="insight-label">Experiment planner</span>
+        <h3>Change the assumptions</h3>
+        <p>
+          Closed-form estimate at the historical traffic proxy, with the 5%
+          enrollment buffer. The plan of record (
+          {numberFormat.format(data.experimentPlan.enrollmentTotal)} users)
+          comes from simulating the full decision rules.
+        </p>
+      </div>
+
+      <div className="planner-controls">
+        <PlannerSlider
+          id="planner-mde"
+          label="Minimum detectable lift"
+          value={mdePp}
+          min={1}
+          max={8}
+          step={0.5}
+          format={(value) => formatPp(value, 1)}
+          onChange={setMdePp}
+        />
+        <PlannerSlider
+          id="planner-margin"
+          label="Payment-error margin"
+          value={marginPp}
+          min={1}
+          max={3}
+          step={0.25}
+          format={(value) => formatPp(value, 2)}
+          onChange={setMarginPp}
+        />
+        <div className="planner-choice">
+          <span id="planner-power-label">Power</span>
+          <div
+            className="segmented-control"
+            role="group"
+            aria-labelledby="planner-power-label"
+          >
+            {plannerPowers.map((option) => (
+              <button
+                type="button"
+                key={option}
+                aria-pressed={power === option}
+                onClick={() => setPower(option)}
+              >
+                {formatPercent(Number(option), 0)}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="planner-choice">
+          <span id="planner-looks-label">Planned looks</span>
+          <div
+            className="segmented-control"
+            role="group"
+            aria-labelledby="planner-looks-label"
+          >
+            {plannerLooks.map((option) => (
+              <button
+                type="button"
+                key={option}
+                aria-pressed={looks === option}
+                onClick={() => setLooks(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="planner-output" aria-live="polite">
+        <div>
+          <strong>{numberFormat.format(plan.enrollmentTotal)}</strong>
+          <span>users to enroll</span>
+        </div>
+        <div>
+          <strong>{plan.weeks.toFixed(1)}</strong>
+          <span>max proxy weeks</span>
+        </div>
+        <div>
+          <strong>{plan.bindingConstraint}</strong>
+          <span>binding constraint on the sample size</span>
+        </div>
+        <div>
+          <strong>{formatPercent(plan.unadjustedFalsePositiveRate, 0)}</strong>
+          <span>{peekingLabel}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+function PlannerSlider({
+  id,
+  label,
+  value,
+  min,
+  max,
+  step,
+  format,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  format: (value: number) => string;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div className="planner-slider">
+      <label htmlFor={id}>
+        {label}
+        <output htmlFor={id}>{format(value)}</output>
+      </label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        aria-valuetext={format(value)}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+    </div>
   );
 }

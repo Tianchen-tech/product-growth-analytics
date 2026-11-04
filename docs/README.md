@@ -8,8 +8,9 @@
 - `analysis_layer_results.md`: implemented marts, reporting thresholds, QA
   results, sensitivity checks, and the provisional telemetry-gated experiment
   priority.
-- `experiment_design.md`: simplified-checkout test contract, sample-size and
-  duration implications, simulated analysis, and launch gates.
+- `experiment_design.md`: simplified-checkout test contract, the
+  decision-rule audit, guardrail sizing, the four-look sequential monitoring
+  plan, operating characteristics, simulated analysis, and launch gates.
 - `checkout_telemetry_diagnostic.md`: historical checkout path classification,
   repeated-event findings, segment checks, and metric implications.
 - `../dashboard/field_dictionary.md`: grains, evidence labels, and usage

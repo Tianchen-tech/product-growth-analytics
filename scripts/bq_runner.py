@@ -32,6 +32,9 @@ RESULT_ROOT = ROOT / "data" / "interim" / "query_results"
 DEFAULT_ENV_FILE = ROOT / ".env"
 
 PROJECT_PATTERN = re.compile(r"^[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+# The value shipped in .env.example; it is syntactically valid, so reject it
+# explicitly instead of letting the first bq call fail with a vaguer error.
+PLACEHOLDER_PROJECT_ID = "your-google-cloud-project-id"
 DATASET_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,1023}$")
 LOCATION_PATTERN = re.compile(r"^[A-Za-z0-9_-]+$")
 CSV_HEADER_FIELD_PATTERN = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
@@ -185,7 +188,10 @@ def require_config() -> Dict[str, str]:
     location = os.environ.get("BQ_LOCATION", "US").strip()
     max_bytes = os.environ.get("BQ_MAX_BYTES_BILLED", "10000000000").strip()
 
-    if not PROJECT_PATTERN.fullmatch(project_id):
+    if (
+        project_id == PLACEHOLDER_PROJECT_ID
+        or not PROJECT_PATTERN.fullmatch(project_id)
+    ):
         raise RunnerError(
             "Set a real BQ_PROJECT_ID in .env. Copy .env.example to .env, then "
             "replace the placeholder with the project shown in BigQuery Studio."

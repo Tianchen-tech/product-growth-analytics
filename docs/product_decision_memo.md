@@ -10,7 +10,8 @@
 Advance a simplified checkout experience into a user-randomized A/B test.
 Do not claim that the current checkout causes abandonment. Launch only after
 sticky exposure logging, the 24-hour outcome window, guardrails, current
-unique-user throughput, and the minimum worthwhile effect are approved.
+unique-user throughput, the planning MDE, and the payment-error margin are
+approved.
 
 ## Executive summary
 
@@ -83,31 +84,46 @@ primary conversion definition.
 
 The 48.02% historical checkout-session completion rate is a planning proxy, not
 the exact user-level 24-hour experiment metric. With two-sided alpha of 5%,
-80% power, equal allocation, and a provisional +5.00 pp absolute MDE:
+equal allocation, and a provisional +5.00 pp absolute MDE, the primary metric
+alone needs 1,569 users per arm (3,296 with a 5% buffer, about 8.4 proxy weeks).
+
+That first plan failed its own audit. Its rule also required the point estimate
+to reach +5.00 pp and the payment-error bound to clear a +1.50 pp margin, which
+the sample size never covered. Simulated end to end, it shipped a change that
+met the target only **28.6%** of the time. The plan of record fixes both
+problems and is sized by simulating the full decision rule:
 
 | Planning quantity | Value |
 |---|---:|
-| Core sample per arm | 1,569 |
-| Buffered target per arm | 1,648 |
-| Buffered total target | 3,296 |
+| Users per arm (5% buffer included) | 3,108 |
+| Maximum total | 6,216 |
 | Historical checkout-session throughput proxy | 56.4 per day |
-| Buffered duration proxy | 8.35 weeks |
+| Maximum duration proxy | 15.8 weeks |
+| Expected duration if the lift is real / absent | 13.4 / 11.7 weeks |
+| Ships a true +5.00 pp lift | 80.1% |
+| Ships a no-effect / harmful change | 2.0% / 2.4% |
 
-The duration is optimistic because historical sessions can repeat within
-users. A +0.50 pp MDE would require approximately 313,580 units and 795 proxy
-weeks, so commercial opportunity and statistical detectability must remain
-separate decisions.
+The payment-error guardrail, not the primary metric, sets the duration: a
++2.00 pp margin would cut the maximum to 4,410 users and 11.2 weeks. Durations
+are optimistic because historical sessions can repeat within users. A +0.50 pp
+MDE would require approximately 313,580 units and 795 proxy weeks, so
+commercial opportunity and statistical detectability must remain separate
+decisions.
 
 ## Decision rules
 
-1. Run the 50/50 sample-ratio-mismatch check before reading outcomes. Stop and
-   investigate if the SRM p-value is below 0.001.
-2. Estimate the primary effect with a 95% Newcombe interval and a pooled
-   two-proportion z-test.
-3. Ship only if the primary interval is positive, the point estimate meets the
-   approved minimum worthwhile effect, and every guardrail passes.
-4. Stop at the buffered sample only at the end of a full week. Do not peek,
-   change the MDE, or promote subgroup findings after reading outcomes.
+1. Run the 50/50 sample-ratio-mismatch check at every look before reading
+   outcomes. Stop and investigate if the SRM p-value is below 0.001.
+2. Read the test at 25%, 50%, 75%, and 100% of enrollment against
+   O'Brien-Fleming boundaries (z = 4.05, 2.86, 2.34, 2.02). Unadjusted daily
+   reads would raise the false-positive rate from 5% to 38%.
+3. Ship when the primary z-statistic reaches the look's boundary and the
+   payment-error upper bound, at the same confidence, is below the margin. The
+   point estimate is not compared with the MDE.
+4. Stop for harm if the payment-error lower bound is above zero; stop for
+   futility at the halfway look if the observed lift is not positive.
+5. Do not change the MDE, margin, look schedule, or subgroup hierarchy after
+   reading outcomes.
 
 ## Launch gates and owners
 
@@ -116,16 +132,19 @@ separate decisions.
   baseline.
 - **Engineering:** prevent re-randomization on repeated checkout starts and
   validate payment-error, refund or cancellation, and timing telemetry.
-- **Payments and Product:** approve guardrail non-inferiority margins and
-  confirm that +5.00 pp is the smallest effect worth shipping.
+- **Payments and Product:** measure the payment-error base rate, approve the
+  margin that sets the duration, and confirm that +5.00 pp is the smallest
+  effect worth detecting.
 - **Product and Design:** freeze the treatment specification and preserve
   pricing, shipping, tax, order-summary, accessibility, and trust disclosures.
 
 ## Simulation disclosure
 
-The seeded notebook example reports a simulated +6.80 pp effect with a 95%
-interval of +3.39 to +10.19 pp and p = 0.00009. It is demonstration-only
-synthetic output and provides no evidence about a real checkout treatment.
+The seeded notebook example assumes a true +5.00 pp lift. At the final look it
+estimates +5.08 pp (z = 4.01 against a 2.02 boundary), but the payment-error
+upper bound of +1.54 pp misses the +1.50 pp margin, so the rule does not ship.
+It is demonstration-only synthetic output and provides no evidence about a
+real checkout treatment.
 
 ## Final recommendation
 

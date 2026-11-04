@@ -453,7 +453,7 @@ def make_page_one(styles: dict[str, ParagraphStyle]) -> list:
                         "Do not claim that the current checkout causes abandonment. "
                         "Launch only after sticky exposure logging, a validated "
                         "24-hour purchase window, guardrails, current user throughput, "
-                        "and the minimum worthwhile effect are approved.",
+                        "the planning MDE, and the payment-error margin are approved.",
                         styles["callout_body"],
                     ),
                 ]
@@ -684,8 +684,8 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
         [
             p("Primary estimand", styles["table_body_bold"]),
             p(
-                "Treatment minus Control conversion in percentage points, with a "
-                "95% Newcombe interval and pooled two-proportion z-test.",
+                "Treatment minus Control conversion in percentage points; pooled "
+                "z-test and Newcombe interval at each look's boundary.",
                 styles["table_body"],
             ),
         ],
@@ -699,8 +699,8 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
         [
             p("Guardrails", styles["table_body_bold"]),
             p(
-                "Payment-error rate, refund or cancellation rate, and checkout "
-                "completion time after telemetry validation.",
+                "Payment-error rate (provisional +1.50 pp non-inferiority margin), "
+                "refund or cancellation rate, and completion time.",
                 styles["table_body"],
             ),
         ],
@@ -717,15 +717,15 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
         ]
     )
 
-    story.extend(section_header("04 / Sample and feasibility", "The approved MDE determines whether the test is practical", styles))
+    story.extend(section_header("04 / Sample and feasibility", "The guardrail margin, not the MDE, sets the duration", styles))
     sample_cards = Table(
         [
             [
                 stat_card("48.02%", "Historical baseline proxy", styles),
                 stat_card("+5.00 pp", "Provisional MDE", styles),
-                stat_card("1,648", "Buffered per arm", styles),
-                stat_card("3,296", "Buffered total", styles),
-                stat_card("8.35 wk", "Session-volume proxy", styles),
+                stat_card("6,216", "Max users, 4 looks", styles),
+                stat_card("80%", "Ships a true +5 pp lift", styles),
+                stat_card("15.8 wk", "Max; 13.4 expected", styles),
             ]
         ],
         colWidths=[CONTENT_WIDTH / 5] * 5,
@@ -747,9 +747,9 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
                 p("<b>+2.00 pp</b><br/>103.7 orders / $7,172", styles["body_small"]),
                 p("<b>+5.00 pp</b><br/>259.4 orders / $17,930", styles["body_small"]),
                 p(
-                    "<b>Important:</b> scenarios are not forecasts. The 8.35-week "
-                    "duration is optimistic until current unique-user throughput "
-                    "and the 24-hour baseline are measured.",
+                    "<b>Important:</b> scenarios are not forecasts. Durations are "
+                    "optimistic until current unique-user throughput and the "
+                    "24-hour baseline are measured.",
                     styles["body_small"],
                 ),
             ]
@@ -773,29 +773,30 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
     )
     story.extend([sample_cards, Spacer(1, 5), scenario, Spacer(1, 6)])
 
-    story.extend(section_header("05 / Decision rules", "A positive p-value alone is not a shipping rule", styles))
+    story.extend(section_header("05 / Decision rules", "The first rule shipped a true +5 pp lift 29% of the time", styles))
     rules_content = [
         (
             "1",
-            "<b>Integrity first.</b> Run the 50/50 sample-ratio-mismatch check "
-            "before reading outcomes. Stop and investigate if SRM p &lt; 0.001.",
+            "<b>Integrity first.</b> Run the 50/50 sample-ratio-mismatch check at "
+            "every look before reading outcomes. Stop if SRM p &lt; 0.001.",
         ),
         (
             "2",
-            "<b>Effect threshold.</b> Require a positive primary interval and a "
-            "point estimate that meets the stakeholder-approved minimum worthwhile "
-            "effect.",
+            "<b>Ship on evidence.</b> Ship when the primary z reaches the look's "
+            "O'Brien-Fleming boundary (4.05, 2.86, 2.34, 2.02). The point "
+            "estimate is not compared with the MDE.",
         ),
         (
             "3",
-            "<b>Guardrails.</b> Payment errors, refunds or cancellations, and "
-            "completion time must remain within approved non-inferiority margins.",
+            "<b>Guardrails.</b> The payment-error upper bound must clear the "
+            "+1.50 pp margin at the same confidence; stop for harm if its lower "
+            "bound is above zero.",
         ),
         (
             "4",
-            "<b>Stopping discipline.</b> Stop at the buffered sample only at the "
-            "end of a full week. Do not peek, change the MDE, or promote subgroup "
-            "findings after outcomes are visible.",
+            "<b>Stopping discipline.</b> Read only at 25, 50, 75, and 100% of "
+            "enrollment (daily unadjusted reads: 38% false positives). Stop for "
+            "futility at the halfway look if the lift is not positive.",
         ),
     ]
     rule_rows = []
@@ -852,8 +853,8 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
         [
             p("Payments + Product", styles["table_body_bold"]),
             p(
-                "Approve guardrail margins and confirm that +5.00 pp is the "
-                "smallest effect worth shipping.",
+                "Measure the payment-error rate, approve the margin that sets "
+                "the duration, and confirm the +5.00 pp MDE.",
                 styles["table_body"],
             ),
         ],
@@ -884,9 +885,9 @@ def make_page_two(styles: dict[str, ParagraphStyle]) -> list:
                 [
                     p("SIMULATION DISCLOSURE", styles["section_label"]),
                     p(
-                        "The seeded notebook result (+6.80 pp; 95% CI +3.39 to "
-                        "+10.19 pp; p = 0.00009) is synthetic demonstration output. "
-                        "It provides no evidence about a real checkout treatment.",
+                        "The seeded example (true lift +5.00 pp) estimates +5.08 pp, "
+                        "z = 4.01, but misses the payment-error margin, so the rule "
+                        "does not ship. It is synthetic demonstration output.",
                         styles["body_small"],
                     ),
                 ],
